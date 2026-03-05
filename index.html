@@ -22,16 +22,67 @@
   button.primary{display:block;width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:600;margin:16px 0;font-size:1.05rem}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
-  /* Modal */
-  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px}
-  #overlay.show{display:flex}
-  #card{width:min(560px,100%);background:#111827;color:#f9fafb;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative}
-  #card header{background:transparent;color:#f9fafb;border-bottom:1px solid rgba(255,255,255,.08);position:static}
-  #close{position:absolute;right:10px;top:10px;background:transparent;border:0;color:#cbd5e1;font-size:26px;line-height:1;cursor:pointer}
-  #content{padding:12px}
+  /* Modal overlay and card - improved */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 9999;
+  }
+  #overlay.show { display: flex; }
+  #card {
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: #111827;
+    color: #f9fafb;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    position: relative;
+    overflow: hidden;
+  }
+  #card header {
+    background: transparent;
+    color: #f9fafb;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    position: static;
+  }
+  #close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: transparent;
+    border: 0;
+    color: #cbd5e1;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  /* Make just the content area scrollable! Keeps actions/buttons visible. */
+  #content {
+    padding: 12px;
+    overflow-y: auto;
+    max-height: 60vh;
+  }
   .row{background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin:8px 0}
   .actions{display:flex;gap:8px;justify-content:flex-end;padding:0 12px 12px}
   .ghost{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:10px 12px}
+  @media (max-width: 600px) {
+    #card {
+      max-width: 99vw;
+      max-height: 98vh;
+    }
+    #content {
+      max-height: 55vh;
+      padding: 8px;
+    }
+  }
 </style>
 <body>
 <header>
