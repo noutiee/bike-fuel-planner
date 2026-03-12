@@ -75,7 +75,7 @@
     const tbody = byId('inventory-tbody');
     if (!tbody) return;
 
-    const hideExpired = byId('toggle-hide-expired')?.checked ?? true;
+    const hideExpired = byId('toggle-hide-expired')?.checked ?? false;
     const today = new Date().toISOString().slice(0,10);
 
     const list = loadInventory()
