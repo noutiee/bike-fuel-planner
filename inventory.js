@@ -1,56 +1,70 @@
 
-// inventory.js
+// inventory.js (DD/MM/YY + FEFO + expired allowed + manual deduct)
 (() => {
   const LS_KEY = 'bikeFuelPlanner.gelInventory.v1';
   const uid = () => (crypto?.randomUUID?.() || 'id-' + Math.random().toString(36).slice(2));
 
-  // ----- Storage -----
-  const loadInventory = () => {
+  // ---- Date helpers (DD/MM/YY <-> ISO) ----
+  function toISOFromDMY(input) {
+    // Accepts DD/MM/YY or DD/MM/YYYY; returns 'YYYY-MM-DD'
+    if (!input) return '';
+    const m = String(input).trim().match(/^([0-3]?\d)\/([0-1]?\d)\/(\d{2}|\d{4})$/);
+    if (!m) return '';
+    let [_, d, mo, y] = m;
+    d = d.padStart(2,'0'); mo = mo.padStart(2,'0');
+    if (y.length === 2) y = '20' + y; // interpret 2-digit year as 20YY
+    const iso = `${y}-${mo}-${d}`;
+    // Basic validity check
+    const test = new Date(iso);
+    if (isNaN(test.getTime())) return '';
+    return iso;
+  }
+  function toDMYFromISO(iso) {
+    if (!iso) return '';
+    const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    const [_, y, mo, d] = m;
+    return `${d}/${mo}/${y.slice(2)}`; // DD/MM/YY
+  }
+  function daysUntilISO(iso) {
+    const ms = (new Date(iso) - new Date());
+    return Math.ceil(ms / (1000*60*60*24));
+  }
+
+  // ---------- Storage ----------
+  function loadInventory() {
     try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? []; }
     catch { return []; }
-  };
-  const saveInventory = (list) => localStorage.setItem(LS_KEY, JSON.stringify(list));
-  const addItem = (item) => { const l = loadInventory(); l.push(item); saveInventory(l); };
-  const updateItem = (id, patch) => {
+  }
+  function saveInventory(list) { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+  function addItem(item) { const l = loadInventory(); l.push(item); saveInventory(l); }
+  function updateItem(id, patch) {
     const l = loadInventory();
     const i = l.findIndex(x => x.id === id);
     if (i >= 0) { l[i] = { ...l[i], ...patch, updatedAt: new Date().toISOString() }; saveInventory(l); }
-  };
-  const deleteItem = (id) => saveInventory(loadInventory().filter(x => x.id !== id));
+  }
+  function deleteItem(id) { saveInventory(loadInventory().filter(x => x.id !== id)); }
 
-  // ----- FEFO allocation -----
-  function allocateFromInventory(requiredCarbs, options = {}) {
-    const { includeExpired = false } = options;
-    const today = new Date().toISOString().slice(0,10);
- 
-const inv = loadInventory()
-  .sort((a,b) => a.expiry.localeCompare(b.expiry))
-  .map(x => ({ ...x }));
+  // ---------- FEFO allocation (expired allowed) ----------
+  function allocateFromInventory(requiredCarbs) {
+    const inv = loadInventory()
+      .sort((a,b) => a.expiry.localeCompare(b.expiry))
+      .map(x => ({ ...x }));
 
     let remaining = Math.max(0, Math.round(requiredCarbs));
     const picks = [];
 
     for (const gel of inv) {
       if (remaining <= 0) break;
-      if (gel.quantity <= 0 || gel.carbsPerGel <= 0) continue;
-
+      if ((gel.quantity||0) <= 0 || (gel.carbsPerGel||0) <= 0) continue;
       const gelsNeeded = Math.ceil(remaining / gel.carbsPerGel);
       const used = Math.min(gelsNeeded, gel.quantity);
-
       if (used > 0) {
-        picks.push({
-          id: gel.id,
-          name: gel.name,
-          used,
-          carbs: used * gel.carbsPerGel,
-          expiry: gel.expiry,
-          caffeineMg: gel.caffeineMg ?? 0,
-        });
+        picks.push({ id: gel.id, name: gel.name, used, carbs: used * gel.carbsPerGel, expiry: gel.expiry, caffeineMg: gel.caffeineMg ?? 0 });
         gel.quantity -= used;
         remaining = Math.max(0, remaining - used * gel.carbsPerGel);
       }
     }
-
     return { picks, shortage: remaining, updatedInventory: inv };
   }
 
@@ -66,45 +80,41 @@ const inv = loadInventory()
     saveInventory(list);
   }
 
-  // ----- UI helpers -----
-  const byId   = (id) => document.getElementById(id);
-  const fmtDate= (d) => new Date(d).toLocaleDateString();
-  const daysUntil = (d) => Math.ceil((new Date(d) - new Date()) / (1000*60*60*24));
+  // ---------- UI wiring ----------
+  const $ = id => document.getElementById(id);
 
   function renderTable() {
-    const tbody = byId('inventory-tbody');
+    const tbody = $('inventory-tbody');
     if (!tbody) return;
-
-    const hideExpired = byId('toggle-hide-expired')?.checked ?? false;
-    const today = new Date().toISOString().slice(0,10);
+    const hideExpired = $('toggle-hide-expired')?.checked ?? false;
+    const todayISO = new Date().toISOString().slice(0,10);
 
     const list = loadInventory()
-      .filter(x => !hideExpired || x.expiry >= today)
+      .filter(x => !hideExpired || x.expiry >= todayISO)
       .sort((a,b) => a.expiry.localeCompare(b.expiry));
 
     tbody.innerHTML = '';
-
     for (const g of list) {
       const tr = document.createElement('tr');
-      const d  = daysUntil(g.expiry);
+      const d = daysUntilISO(g.expiry);
       let badge = '';
-      if (d < 0) badge = `<span class="badge-expired">expired</span>`;
+      if (d < 0) badge = '<span class="badge-expired">expired</span>';
       else if (d <= 30) badge = `<span class="badge-expiring">${d}d</span>`;
-
       tr.innerHTML = `
         <td>${g.name} ${badge}</td>
         <td>${g.carbsPerGel}</td>
         <td>${g.caffeineMg ?? ''}</td>
-        <td>${fmtDate(g.expiry)}</td>
+        <td>${toDMYFromISO(g.expiry)}</td>
         <td>${g.quantity}</td>
         <td>
+          <button data-dec="${g.id}">–1</button>
           <button data-edit="${g.id}">Edit</button>
           <button data-del="${g.id}">Delete</button>
-        </td>
-      `;
+        </td>`;
       tbody.appendChild(tr);
     }
 
+    // Actions
     tbody.querySelectorAll('button[data-del]').forEach(btn => {
       btn.addEventListener('click', () => { deleteItem(btn.dataset.del); renderTable(); });
     });
@@ -113,84 +123,58 @@ const inv = loadInventory()
         const id = btn.dataset.edit;
         const g  = loadInventory().find(x => x.id === id);
         if (!g) return;
-        const qty = Number(prompt('Quantity', g.quantity));
-        if (!Number.isNaN(qty)) updateItem(id, { quantity: qty });
+        const name = prompt('Name', g.name) ?? g.name;
+        const carbs = Number(prompt('Carbs per gel (g)', g.carbsPerGel));
+        const caff  = prompt('Caffeine (mg, optional)', g.caffeineMg ?? '')
+        const qty   = Number(prompt('Quantity', g.quantity));
+        const dmy   = prompt('Expiry (DD/MM/YY)', toDMYFromISO(g.expiry)) || toDMYFromISO(g.expiry);
+        const iso   = toISOFromDMY(dmy) || g.expiry;
+        updateItem(id, {
+          name,
+          carbsPerGel: Number.isFinite(carbs) ? Math.max(0, Math.round(carbs)) : g.carbsPerGel,
+          caffeineMg: caff === '' ? undefined : Number(caff),
+          quantity: Number.isFinite(qty) ? Math.max(0, Math.round(qty)) : g.quantity,
+          expiry: iso
+        });
+        renderTable();
+      });
+    });
+    tbody.querySelectorAll('button[data-dec]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.dec;
+        const item = loadInventory().find(x => x.id === id);
+        if (!item) return;
+        updateItem(id, { quantity: Math.max(0, (item.quantity||0) - 1) });
         renderTable();
       });
     });
   }
 
   function wireForm() {
-    const form = byId('inventory-form');
+    const form = $('inventory-form');
     if (!form) return;
-
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const name   = byId('gel-name').value.trim();
-      const carbs  = Number(byId('gel-carbs').value);
-      const caff   = byId('gel-caff').value ? Number(byId('gel-caff').value) : undefined;
-      const expiry = byId('gel-expiry').value;
-      const qty    = Number(byId('gel-qty').value);
-
-      if (!name || carbs <= 0 || !expiry || qty <= 0) {
-        alert('Please fill required fields correctly.');
+      const name   = $('gel-name').value.trim();
+      const carbs  = Number($('gel-carbs').value);
+      const caff   = $('gel-caff').value ? Number($('gel-caff').value) : undefined;
+      const expiryDMY = $('gel-expiry').value.trim();
+      const qty    = Number($('gel-qty').value);
+      const iso = toISOFromDMY(expiryDMY);
+      if (!name || carbs <= 0 || !iso || qty <= 0) {
+        alert('Please fill in all required fields with valid values. Use DD/MM/YY for the date.');
         return;
       }
-
       const nowIso = new Date().toISOString();
-      addItem({
-        id: uid(),
-        name,
-        carbsPerGel: Math.round(carbs),
-        caffeineMg: caff,
-        expiry,
-        quantity: Math.round(qty),
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      });
-
+      addItem({ id: uid(), name, carbsPerGel: Math.round(carbs), caffeineMg: caff, expiry: iso, quantity: Math.round(qty), createdAt: nowIso, updatedAt: nowIso });
       form.reset();
       renderTable();
     });
-
-    byId('toggle-hide-expired')?.addEventListener('change', renderTable);
-
-    byId('btn-export')?.addEventListener('click', () => {
-      const data = JSON.stringify(loadInventory(), null, 2);
-      const blob = new Blob([data], { type:'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'gel-inventory.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    byId('file-import')?.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const imported = JSON.parse(reader.result);
-          if (!Array.isArray(imported)) throw new Error('Invalid format');
-          saveInventory(imported);
-          renderTable();
-        } catch {
-          alert('Invalid JSON file.');
-        }
-      };
-      reader.readAsText(file);
-    });
+    $('toggle-hide-expired')?.addEventListener('change', renderTable);
   }
 
-  // Public API for planner
-  window.GelInventory = {
-    loadInventory, saveInventory,
-    allocateFromInventory, deductPlanFromInventory,
-    renderTable
-  };
+  // Public API
+  window.GelInventory = { loadInventory, saveInventory, allocateFromInventory, deductPlanFromInventory, renderTable };
 
-  document.addEventListener('DOMContentLoaded', () => {
-    wireForm(); renderTable();
-  });
+  document.addEventListener('DOMContentLoaded', () => { wireForm(); renderTable(); });
 })();
