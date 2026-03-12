@@ -22,10 +22,10 @@
   function allocateFromInventory(requiredCarbs, options = {}) {
     const { includeExpired = false } = options;
     const today = new Date().toISOString().slice(0,10);
-    const inv = loadInventory()
-      .filter(x => includeExpired || x.expiry >= today)
-      .sort((a,b) => a.expiry.localeCompare(b.expiry))
-      .map(x => ({ ...x }));
+ 
+const inv = loadInventory()
+  .sort((a,b) => a.expiry.localeCompare(b.expiry))
+  .map(x => ({ ...x }));
 
     let remaining = Math.max(0, Math.round(requiredCarbs));
     const picks = [];
