@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <!-- CORRECT: proper manifest link (relative path, no leading slash) -->
+  <!-- Manifest: relative path (required for GitHub Pages project subpath) -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b57d0">
   <title>Bike Fuel Planner</title>
@@ -137,19 +137,149 @@
   </div>
 </div>
 
-<script>
-// Register SW (correct path/scope for GitHub Pages project)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () =>
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
-  );
-}
-
-const $ = id => document.getElementById(id);
-</script>
-
-<!-- CORRECT: proper script tag (relative path, no leading slash) -->
+<!-- Load inventory helpers first -->
 <script src="inventory.js"></script>
+
+<!-- App logic -->
+<script>
+  // Register SW (project scope)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () =>
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+    );
+  }
+
+  const $ = id => document.getElementById(id);
+
+  function calc(){
+    const rideHours=parseFloat($("rideHours").value)||0,
+      cph=parseFloat($("carbsPerHour").value)||0,
+      maxB=parseFloat($("maxBottleCarbs").value)||0,
+      nB=parseFloat($("numCarbBottles").value)||0,
+      G=parseFloat($("G").value)||0,
+      F=parseFloat($("F").value)||0,
+      maltoFrac=(parseFloat($("maltoFrac").value)||0)/100,
+      fructoseFrac=(parseFloat($("fructoseFrac").value)||0)/100,
+      NaPer=parseFloat($("sodiumPerScoop").value)||0,
+      NaH=parseFloat($("targetSodiumPerHour").value)||0;
+
+    const total = rideHours * cph;
+    const inBottlesRaw = Math.min(nB*maxB, total);
+
+    // Inventory integration
+    const gelsRequired = Math.max(0, total - inBottlesRaw);
+
+    // Powder split for bottles
+    const parts = G+F;
+    const fructoseCarbs = parts ? inBottlesRaw * F / parts : 0;
+    const maltoCarbs    = parts ? inBottlesRaw * G / parts : 0;
+    const fructosePowder = fructoseFrac ? fructoseCarbs / fructoseFrac : 0;
+    const maltoPowder    = maltoFrac ? maltoCarbs / maltoFrac : 0;
+
+    const totalSodium = rideHours * NaH;
+    const scoops = NaPer ? totalSodium / NaPer : 0;
+
+    return {
+      rideHours,cph,nB,maxB,G,F,maltoFrac,fructoseFrac,NaPer,NaH,
+      total,inBottlesRaw,gelsRequired,fructosePowder,maltoPowder,
+      totalPowder: fructosePowder + maltoPowder,
+      totalSodium: scoops*NaPer,
+      scoops
+    };
+  }
+
+  function round(x,d){const p=Math.pow(10,d||0);return (Math.round((x+Number.EPSILON)*p)/p).toFixed(d||0)}
+
+  function buildBaseSummary(o, allocated, adjustedBottles) {
+    const actual = adjustedBottles + allocated;
+    const dev = o.total ? (100*(actual-o.total)/o.total) : 0;
+    const lines = [
+      `Ride duration: ${round(o.rideHours,2)} h`,
+      `Carbs per hour: ${round(o.cph,0)} g/h`,
+      `Carb bottles: ${o.nB}`,
+      `Malto (per bottle): ${round(o.nB? o.maltoPowder/o.nB : 0,0)} g`,
+      `Fructose (per bottle): ${round(o.nB? o.fructosePowder/o.nB : 0,0)} g`,
+      `Evolytes (per bottle): ${round(o.nB? o.scoops/o.nB : 0,2)} scoops`,
+      `Total carbs per bottle: ${round(o.nB? adjustedBottles/o.nB : 0,0)} g`,
+      `Total carbs (plan): ${round(actual,0)} g`,
+      `Δ vs target: ${round(dev,1)}%`
+    ];
+    return lines.join('\n');
+  }
+
+  function showSummary(){
+    const o = calc();
+
+    // Allocate gels from inventory
+    const alloc = window.GelInventory.allocateFromInventory(o.gelsRequired);
+    const allocatedCarbs = (alloc.picks||[]).reduce((s,p)=>s+p.carbs,0);
+    const surplus = Math.max(0, allocatedCarbs - o.gelsRequired);
+
+    // Reduce bottle carbs by surplus (not below 0)
+    const adjustedBottles = Math.max(0, o.inBottlesRaw - surplus);
+
+    const rows = [
+      `Ride duration: ${round(o.rideHours,2)} h`,
+      `Carbs per hour: ${round(o.cph,0)} g/h`,
+      `Carb bottles: ${o.nB}`,
+      `Malto (per bottle): ${round(o.nB? o.maltoPowder/o.nB : 0,0)} g`,
+      `Fructose (per bottle): ${round(o.nB? o.fructosePowder/o.nB : 0,0)} g`,
+      `Evolytes (per bottle): ${round(o.nB? o.scoops/o.nB : 0,2)} scoops`,
+      `Total carbs per bottle: ${round(o.nB? adjustedBottles/o.nB : 0,0)} g`,
+      `Total carbs (plan): ${round(adjustedBottles + allocatedCarbs,0)} g`,
+      `Δ vs target: ${round((o.total ? (100*((adjustedBottles + allocatedCarbs)-o.total)/o.total) : 0),1)}%`,
+      `\nTap Copy to put this summary on your clipboard.`
+    ];
+    ['s1','s2','s3','s4','s5'].forEach((id,i)=>{ (document.getElementById(id)||{}).textContent = rows[i] || '' });
+
+    // Inventory pack list
+    const invRow = document.getElementById("sInv");
+    function toDMY(iso){
+      const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return iso;
+      const [_, y, mo, d] = m; return `${d}/${mo}/${y.slice(2)}`;
+    }
+    const list = (alloc.picks||[]).length
+      ? `<ul>` + alloc.picks.map(p => `<li>${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})</li>`).join('') + `</ul>`
+      : '<p>No gels matched in inventory.</p>';
+    invRow.innerHTML = `
+      <h3 style="margin:0 0 6px">Pack list (from inventory)</h3>
+      ${list}
+      ${(alloc.shortage > 0) ? `<p><strong>Shortage:</strong> ${alloc.shortage} g carbs still needed → add/buy extra gels.</p>` : `<p>You're fully covered by inventory 🎉</p>`}
+      <button id="btnDeduct" class="ghost" type="button">Mark as packed (deduct)</button>`;
+
+    document.getElementById("btnDeduct")?.addEventListener('click', () => {
+      GelInventory.deductPlanFromInventory(alloc.picks);
+      GelInventory.renderTable();
+      alert('Inventory updated ✅');
+    });
+
+    const overlay = document.getElementById("overlay");
+    overlay.classList.add('show');
+
+    const base = buildBaseSummary(o, allocatedCarbs, adjustedBottles);
+    let invText = '\n\nPack list (inventory):\n';
+    if ((alloc.picks||[]).length) invText += alloc.picks.map(p => `- ${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})`).join('\n');
+    if (alloc.shortage > 0) invText += `\nShortage: ${alloc.shortage} g carbs still needed.`;
+    overlay.dataset.summary = base + invText;
+  }
+
+  // Wire up buttons
+  document.getElementById("btnCalc").addEventListener('click', showSummary);
+  document.getElementById("btnClose").addEventListener('click', () => document.getElementById("overlay").classList.remove('show'));
+  document.getElementById("close").addEventListener('click', () => document.getElementById("overlay").classList.remove('show'));
+  document.getElementById("btnCopy").addEventListener('click', () => {
+    const t = document.getElementById("overlay").dataset.summary || '';
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(t).then(() => alert('Summary copied')).catch(fallback);
+    } else { fallback(); }
+    function fallback(){
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); alert('Summary copied'); } catch(e){ alert('Copy failed. Long-press to select text.'); }
+      document.body.removeChild(ta);
+    }
+  });
+</script>
 
 </body>
 </html>
