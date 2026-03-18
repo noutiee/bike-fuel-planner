@@ -19,7 +19,6 @@ self.addEventListener('install', (e) => {
         const cache = await caches.open(CACHE);
         await cache.addAll(ASSETS);
       } catch (err) {
-        // If a single asset 404s (e.g., icon missing), don't fail install entirely.
         console.warn('[SW] Precache failed:', err);
       }
     })()
@@ -32,7 +31,6 @@ self.addEventListener('activate', (e) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
-      // Take control of open clients right away
       await self.clients.claim();
     })()
   );
