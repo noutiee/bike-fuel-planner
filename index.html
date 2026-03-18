@@ -123,8 +123,11 @@
 </div>
 <script>
 // Register SW
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  // Register SW from the same folder; limit scope to the project subpath
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { scope: './' }));
+
 }
 const $ = id => document.getElementById(id);
 
