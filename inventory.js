@@ -60,7 +60,14 @@
       const gelsNeeded = Math.ceil(remaining / gel.carbsPerGel);
       const used = Math.min(gelsNeeded, gel.quantity);
       if (used > 0) {
-        picks.push({ id: gel.id, name: gel.name, used, carbs: used * gel.carbsPerGel, expiry: gel.expiry, caffeineMg: gel.caffeineMg ?? 0 });
+        picks.push({
+          id: gel.id,
+          name: gel.name,
+          used,
+          carbs: used * gel.carbsPerGel,
+          expiry: gel.expiry,
+          caffeineMg: gel.caffeineMg ?? 0
+        });
         gel.quantity -= used;
         remaining = Math.max(0, remaining - used * gel.carbsPerGel);
       }
@@ -86,6 +93,7 @@
   function renderTable() {
     const tbody = $('inventory-tbody');
     if (!tbody) return;
+
     const hideExpired = $('toggle-hide-expired')?.checked ?? false;
     const todayISO = new Date().toISOString().slice(0,10);
 
@@ -123,14 +131,16 @@
         const id = btn.dataset.edit;
         const g  = loadInventory().find(x => x.id === id);
         if (!g) return;
-        const name = prompt('Name', g.name) ?? g.name;
+
+        const name = (prompt('Name', g.name) ?? g.name).trim();
         const carbs = Number(prompt('Carbs per gel (g)', g.carbsPerGel));
-        const caff  = prompt('Caffeine (mg, optional)', g.caffeineMg ?? '')
+        const caff  = prompt('Caffeine (mg, optional)', g.caffeineMg ?? '');
         const qty   = Number(prompt('Quantity', g.quantity));
         const dmy   = prompt('Expiry (DD/MM/YY)', toDMYFromISO(g.expiry)) || toDMYFromISO(g.expiry);
         const iso   = toISOFromDMY(dmy) || g.expiry;
+
         updateItem(id, {
-          name,
+          name: name || g.name,
           carbsPerGel: Number.isFinite(carbs) ? Math.max(0, Math.round(carbs)) : g.carbsPerGel,
           caffeineMg: caff === '' ? undefined : Number(caff),
           quantity: Number.isFinite(qty) ? Math.max(0, Math.round(qty)) : g.quantity,
@@ -155,18 +165,28 @@
     if (!form) return;
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const name   = $('gel-name').value.trim();
+      const name   = $('gel-name').value.trim().replace(/\s+/g, ' ');
       const carbs  = Number($('gel-carbs').value);
       const caff   = $('gel-caff').value ? Number($('gel-caff').value) : undefined;
       const expiryDMY = $('gel-expiry').value.trim();
       const qty    = Number($('gel-qty').value);
       const iso = toISOFromDMY(expiryDMY);
-      if (!name || carbs <= 0 || !iso || qty <= 0) {
+
+      if (!name || !Number.isFinite(carbs) || carbs <= 0 || !iso || !Number.isFinite(qty) || qty <= 0) {
         alert('Please fill in all required fields with valid values. Use DD/MM/YY for the date.');
         return;
       }
       const nowIso = new Date().toISOString();
-      addItem({ id: uid(), name, carbsPerGel: Math.round(carbs), caffeineMg: caff, expiry: iso, quantity: Math.round(qty), createdAt: nowIso, updatedAt: nowIso });
+      addItem({
+        id: uid(),
+        name,
+        carbsPerGel: Math.round(carbs),
+        caffeineMg: caff,
+        expiry: iso,
+        quantity: Math.round(qty),
+        createdAt: nowIso,
+        updatedAt: nowIso
+      });
       form.reset();
       renderTable();
     });
@@ -174,7 +194,13 @@
   }
 
   // Public API
-  window.GelInventory = { loadInventory, saveInventory, allocateFromInventory, deductPlanFromInventory, renderTable };
+  window.GelInventory = {
+    loadInventory,
+    saveInventory,
+    allocateFromInventory,
+    deductPlanFromInventory,
+    renderTable
+  };
 
   document.addEventListener('DOMContentLoaded', () => { wireForm(); renderTable(); });
 })();
