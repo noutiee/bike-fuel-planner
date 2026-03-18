@@ -1,50 +1,51 @@
 
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- FIXED: removed leading slash -->
-<link rel="manifest" href="manifest.json">
+  <!-- CORRECT: proper manifest link (relative path, no leading slash) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b57d0">
+  <title>Bike Fuel Planner</title>
 
-<meta name="theme-color" content="#0b57d0">
-<title>Bike Fuel Planner</title>
-
-<style>
- :root{--brand:#0b57d0;--bg:#f6f7fb;--card:#ffffff;--ink:#0d1321;--muted:#64748b}
- *{box-sizing:border-box}
- body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
- header{padding:14px 16px;background:var(--brand);color:#fff;position:sticky;top:0}
- h1{font-size:1.125rem;margin:0}
- main{max-width:880px;margin:16px auto;padding:0 12px}
- .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
- @media (max-width:720px){.grid{grid-template-columns:1fr}}
- fieldset{border:1px solid #e5e7eb;border-radius:10px;background:var(--card);padding:12px}
- legend{padding:0 6px;color:var(--muted)}
- label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0}
- label span{font-size:0.95rem}
- input{width:180px;text-align:right;padding:8px 10px;border:1px solid #c7d0e0;border-radius:8px;background:#fff}
- button.primary{display:block;width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:600;margin:16px 0;font-size:1.05rem}
- .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
- /* Modal */
- #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 9999; }
- #overlay.show { display: flex; }
- #card { width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; background: #111827; color: #f9fafb; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.35); position: relative; overflow: hidden; }
- #card header { background: transparent; color: #f9fafb; border-bottom: 1px solid rgba(255,255,255,.08); position: static; }
- #close { position: absolute; right: 10px; top: 10px; background: transparent; border: 0; color: #cbd5e1; font-size: 26px; line-height: 1; cursor: pointer; }
- #content { padding: 12px; overflow-y: auto; max-height: 60vh; }
- .row{background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin:8px 0}
- .actions{display:flex;gap:8px;justify-content:flex-end;padding:0 12px 12px}
- .ghost{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:10px 12px}
- @media (max-width: 600px) { #card { max-width: 99vw; max-height: 98vh; } #content { max-height: 55vh; padding: 8px; } }
- /* Inventory badges */
- .badge-expiring { background:#fff3cd; color:#6c5200; padding:0 .5rem; border-radius:.5rem }
- .badge-expired  { background:#fdecea; color:#8a1f16; padding:0 .5rem; border-radius:.5rem }
- table { border-collapse: collapse; width:100%; }
- th, td { padding: 8px; border-bottom: 1px solid #e5e7eb; text-align:left; }
- th { color: var(--muted); font-weight:600 }
- .hint { color: var(--muted); font-size: .9rem; margin-top: 6px; }
-</style>
+  <style>
+   :root{--brand:#0b57d0;--bg:#f6f7fb;--card:#ffffff;--ink:#0d1321;--muted:#64748b}
+   *{box-sizing:border-box}
+   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+   header{padding:14px 16px;background:var(--brand);color:#fff;position:sticky;top:0}
+   h1{font-size:1.125rem;margin:0}
+   main{max-width:880px;margin:16px auto;padding:0 12px}
+   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+   @media (max-width:720px){.grid{grid-template-columns:1fr}}
+   fieldset{border:1px solid #e5e7eb;border-radius:10px;background:var(--card);padding:12px}
+   legend{padding:0 6px;color:var(--muted)}
+   label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0}
+   label span{font-size:0.95rem}
+   input{width:180px;text-align:right;padding:8px 10px;border:1px solid #c7d0e0;border-radius:8px;background:#fff}
+   button.primary{display:block;width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:600;margin:16px 0;font-size:1.05rem}
+   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+   /* Modal */
+   #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 9999; }
+   #overlay.show { display: flex; }
+   #card { width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; background: #111827; color: #f9fafb; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.35); position: relative; overflow: hidden; }
+   #card header { background: transparent; color: #f9fafb; border-bottom: 1px solid rgba(255,255,255,.08); position: static; }
+   #close { position: absolute; right: 10px; top: 10px; background: transparent; border: 0; color: #cbd5e1; font-size: 26px; line-height: 1; cursor: pointer; }
+   #content { padding: 12px; overflow-y: auto; max-height: 60vh; }
+   .row{background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin:8px 0}
+   .actions{display:flex;gap:8px;justify-content:flex-end;padding:0 12px 12px}
+   .ghost{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:10px 12px}
+   @media (max-width: 600px) { #card { max-width: 99vw; max-height: 98vh; } #content { max-height: 55vh; padding: 8px; } }
+   /* Inventory badges */
+   .badge-expiring { background:#fff3cd; color:#6c5200; padding:0 .5rem; border-radius:.5rem }
+   .badge-expired  { background:#fdecea; color:#8a1f16; padding:0 .5rem; border-radius:.5rem }
+   table { border-collapse: collapse; width:100%; }
+   th, td { padding: 8px; border-bottom: 1px solid #e5e7eb; text-align:left; }
+   th { color: var(--muted); font-weight:600 }
+   .hint { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  </style>
+</head>
 
 <body>
 <header>
@@ -56,3 +57,99 @@
     <fieldset>
       <legend>Ride & Targets</legend>
       <label><span>Ride duration (h)</span><input id="rideHours" type="number" step="0.25" value="5" inputmode="decimal"></label>
+      <label><span>Carbs per hour (g/h)</span><input id="carbsPerHour" type="number" step="1" value="80"></label>
+      <label><span># carb bottles</span><input id="numCarbBottles" type="number" step="1" value="2"></label>
+      <label><span>Max carbs per bottle (g)</span><input id="maxBottleCarbs" type="number" step="1" value="120"></label>
+      <div class="hint">Gels are pulled from your inventory below (FEFO). Expired gels are allowed.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Mix ratio</legend>
+      <label><span>G part (malto)</span><input id="G" type="number" step="0.1" value="1"></label>
+      <label><span>F part (fructose)</span><input id="F" type="number" step="0.1" value="0.8"></label>
+      <label><span>Malto carb fraction (%)</span><input id="maltoFrac" type="number" step="1" value="95"></label>
+      <label><span>Fructose carb fraction (%)</span><input id="fructoseFrac" type="number" step="1" value="100"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Electrolytes</legend>
+      <label><span>Sodium per scoop (mg)</span><input id="sodiumPerScoop" type="number" step="100" value="5000"></label>
+      <label><span>Target sodium (mg/h)</span><input id="targetSodiumPerHour" type="number" step="50" value="700"></label>
+    </fieldset>
+  </div>
+
+  <button class="primary" id="btnCalc">Calculate</button>
+
+  <!-- Inventory section -->
+  <section id="inventory-section" style="margin-top:16px">
+    <fieldset>
+      <legend>Gel Inventory</legend>
+      <form id="inventory-form">
+        <label><span>Gel name</span><input id="gel-name" placeholder="e.g., Maurten Gel 100" required></label>
+        <label><span>Carbs per gel (g)</span><input id="gel-carbs" type="number" min="1" step="1" required></label>
+        <label><span>Caffeine (mg, optional)</span><input id="gel-caff" type="number" min="0" step="1"></label>
+        <label><span>Expiry date (DD/MM/YY)</span><input id="gel-expiry" placeholder="DD/MM/YY" required></label>
+        <label><span>Quantity</span><input id="gel-qty" type="number" min="1" step="1" required></label>
+        <button class="primary" type="submit">Add to inventory</button>
+      </form>
+
+      <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
+        <button class="ghost" id="btn-export" type="button">Export JSON</button>
+        <label class="ghost" style="cursor:pointer">Import JSON <input id="file-import" type="file" accept="application/json" hidden></label>
+        <label style="margin-left:auto"><input id="toggle-hide-expired" type="checkbox"> Hide expired</label>
+      </div>
+
+      <table id="inventory-table">
+        <thead>
+          <tr>
+            <th>Gel</th>
+            <th>Carbs (g)</th>
+            <th>Caff (mg)</th>
+            <th>Expiry</th>
+            <th>Qty</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="inventory-tbody"></tbody>
+      </table>
+    </fieldset>
+  </section>
+</main>
+
+<!-- Modal overlay -->
+<div id="overlay" role="dialog" aria-modal="true">
+  <div id="card">
+    <header><h1>Fuel Plan Summary</h1></header>
+    <button id="close" aria-label="Close">✕</button>
+    <div id="content">
+      <div class="row" id="s1"></div>
+      <div class="row" id="s2"></div>
+      <div class="row" id="s3"></div>
+      <div class="row" id="s4"></div>
+      <div class="row" id="s5"></div>
+      <div class="row" id="sInv"></div>
+    </div>
+
+    <div class="actions">
+      <button class="ghost" id="btnCopy">Copy summary</button>
+      <button class="ghost" id="btnClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Register SW (correct path/scope for GitHub Pages project)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+  );
+}
+
+const $ = id => document.getElementById(id);
+</script>
+
+<!-- CORRECT: proper script tag (relative path, no leading slash) -->
+<script src="inventory.js"></script>
+
+</body>
+</html>
