@@ -11,7 +11,7 @@
     const m = String(input).trim().match(/^([0-3]?\d)\/([0-1]?\d)\/(\d{2}|\d{4})$/);
     if (!m) return '';
     let [_, d, mo, y] = m;
-    d = d.padStart(2,'0'); mo = mo.padStart(2,'0');
+    d = d.padStart(2, '0'); mo = mo.padStart(2, '0');
     if (y.length === 2) y = '20' + y; // interpret 2-digit year as 20YY
     const iso = `${y}-${mo}-${d}`;
     // Basic validity check
@@ -36,13 +36,24 @@
     try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? []; }
     catch { return []; }
   }
-  function saveInventory(list) { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+
+  // 🔄 UPDATED: also push to cloud (if signed in) after local save
+  function saveInventory(list) {
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+    window.CloudSync?.save(list); // <= pushes to Firestore when signed in
+  }
+
   function addItem(item) { const l = loadInventory(); l.push(item); saveInventory(l); }
+
   function updateItem(id, patch) {
     const l = loadInventory();
     const i = l.findIndex(x => x.id === id);
-    if (i >= 0) { l[i] = { ...l[i], ...patch, updatedAt: new Date().toISOString() }; saveInventory(l); }
+    if (i >= 0) {
+      l[i] = { ...l[i], ...patch, updatedAt: new Date().toISOString() };
+      saveInventory(l);
+    }
   }
+
   function deleteItem(id) { saveInventory(loadInventory().filter(x => x.id !== id)); }
 
   // ---------- FEFO allocation (expired allowed) ----------
@@ -191,6 +202,49 @@
       renderTable();
     });
     $('toggle-hide-expired')?.addEventListener('change', renderTable);
+
+    // ----- Optional: Export / Import helpers -----
+    const btnExport = $('btn-export');
+    const fileImport = $('file-import');
+
+    btnExport?.addEventListener('click', () => {
+      const data = JSON.stringify(loadInventory(), null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'gel-inventory.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    fileImport?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) throw new Error('Invalid JSON format (expected an array).');
+        // Basic shape check (non-fatal)
+        const cleaned = parsed.map(x => ({
+          id: x.id || uid(),
+          name: String(x.name || '').trim(),
+          carbsPerGel: Math.max(0, Math.round(Number(x.carbsPerGel || 0))),
+          caffeineMg: (x.caffeineMg === '' || x.caffeineMg == null) ? undefined : Number(x.caffeineMg),
+          expiry: toISOFromDMY(x.expiry) || x.expiry || '',
+          quantity: Math.max(0, Math.round(Number(x.quantity || 0))),
+          createdAt: x.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }));
+        saveInventory(cleaned);
+        renderTable();
+        alert('Inventory imported ✅');
+      } catch (err) {
+        alert('Import failed: ' + (err?.message || err));
+      } finally {
+        e.target.value = '';
+      }
+    });
+    // ----- End optional helpers -----
   }
 
   // Public API
