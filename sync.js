@@ -1,17 +1,9 @@
 
 // sync.js – Cloud sync for Bike Fuel Planner (Google sign-in + Firestore)
-// Works with Firebase compat CDN scripts (no bundler needed).
-//
-// Firestore structure:
-//   collection: "inventories"
-//   document id: <user.uid>
-//   document: { items: [...], updatedAt: serverTimestamp(), version: 1 }
-//
-// Local storage key must match inventory.js:
-//   'bikeFuelPlanner.gelInventory.v1'
+// Works with Firebase compat CDN scripts (no bundler).
 
 (function () {
-  // 1) Your Firebase config (from your console)
+  // ---- 1) Firebase config (yours) ----
   const firebaseConfig = {
     apiKey: "AIzaSyCsO3m4FqCZaRrP0RQu30uCiWVD0fwBcX4",
     authDomain: "bike-fuel-planner.firebaseapp.com",
@@ -22,24 +14,30 @@
     measurementId: "G-TF01V4FKBS"
   };
 
-  // 2) Initialize Firebase (compat)
+  // ---- 2) Init Firebase ----
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db   = firebase.firestore();
 
-  // (Optional) enable offline cache; if it errors (e.g., multiple tabs), we ignore.
+  // Optional offline cache
   db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-  // 3) Constants
+  // ---- 3) Constants / DOM helpers ----
   const LS_KEY = 'bikeFuelPlanner.gelInventory.v1';
   const COL    = 'inventories';
 
-  // 4) Runtime state
-  let unsub = null;              // Firestore onSnapshot unsubscribe
-  let currentUid = null;         // signed-in user id
-  let suppressLocalWatcher = false; // prevent echo loops when we apply remote to local
+  const $ = (id) => document.getElementById(id);
+  const elSignIn     = $('btnSignIn');
+  const elSignOut    = $('btnSignOut');
+  const elSignedInAs = $('signedInAs');
+  const elForcePull  = $('btnForcePull');
 
-  // 5) Helpers
+  // ---- 4) Runtime state ----
+  let unsub = null;                // Firestore onSnapshot unsubscribe
+  let currentUser = null;          // firebase.User
+  let suppressLocalWatcher = false;
+
+  // ---- 5) Helpers ----
   function lastUpdated(list) {
     let t = 0;
     for (const it of (list || [])) {
@@ -48,19 +46,19 @@
     }
     return t;
   }
-
-  function shouldUseRemote(localList, remoteList) {
+  function isRemoteNewer(localList, remoteList) {
     return lastUpdated(remoteList) > lastUpdated(localList);
   }
-
   async function saveLocal(list) {
     localStorage.setItem(LS_KEY, JSON.stringify(list || []));
-    // Update table if the inventory UI is present
     if (window.GelInventory?.renderTable) {
-      try { window.GelInventory.renderTable(); } catch { /* no-op */ }
+      try { window.GelInventory.renderTable(); } catch {}
     }
   }
-
+  async function readLocal() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch { return []; }
+  }
   async function saveRemote(uid, list) {
     const ref = db.collection(COL).doc(uid);
     await ref.set(
@@ -72,70 +70,104 @@
       { merge: true }
     );
   }
+  async function readRemote(uid) {
+    const ref = db.collection(COL).doc(uid);
+    const snap = await ref.get();
+    return snap?.exists ? (snap.data().items || []) : [];
+  }
 
-  // 6) Simple auth controls for your buttons
+  // ---- 6) UI updates ----
+  function setSignedOutUI() {
+    if (elSignIn)     elSignIn.style.display = 'inline-block';
+    if (elSignOut)    elSignOut.style.display = 'none';
+    if (elSignedInAs) elSignedInAs.textContent = ''; // no user
+    if (elForcePull)  elForcePull.style.display = 'none';
+  }
+  function setSignedInUI(user) {
+    if (elSignIn)     elSignIn.style.display = 'none';
+    if (elSignOut)    elSignOut.style.display = 'inline-block';
+    if (elSignedInAs) elSignedInAs.textContent = `Signed in as ${user.email || user.uid}`;
+    if (elForcePull)  elForcePull.style.display = 'inline-block';
+  }
+
+  // ---- 7) Public sign-in/out (used by your buttons) ----
   window.signIn = async function signIn() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    // Optional: prompt account selection every time
     provider.setCustomParameters({ prompt: 'select_account' });
     await auth.signInWithPopup(provider);
   };
-
   window.signOut = async function signOut() {
     await auth.signOut();
   };
 
-  // 7) When auth state changes, (re)wire sync
-  auth.onAuthStateChanged(async (user) => {
-    // Clean previous listener (if any)
-    if (unsub) { try { unsub(); } catch {} ; unsub = null; }
-    currentUid = user?.uid || null;
+  // ---- 8) Force sync actions (handy for testing) ----
+  // Overwrite local with remote (pull)
+  async function forcePullFromCloud() {
+    if (!currentUser) return;
+    try {
+      const remote = await readRemote(currentUser.uid);
+      suppressLocalWatcher = true;
+      await saveLocal(remote);
+      suppressLocalWatcher = false;
+      alert('Local inventory replaced with cloud version ✅');
+    } catch (e) {
+      alert('Force pull failed. See console for details.');
+      console.error('[sync] forcePullFromCloud error:', e);
+    }
+  }
+  elForcePull?.addEventListener('click', forcePullFromCloud);
 
-    if (!currentUid) {
+  // ---- 9) Auth → wire sync ----
+  auth.onAuthStateChanged(async (user) => {
+    // Clean old listener
+    if (unsub) { try { unsub(); } catch {} ; unsub = null; }
+
+    currentUser = user || null;
+
+    if (!currentUser) {
+      setSignedOutUI();
       console.log('[sync] Signed out — local-only mode.');
       return;
     }
 
-    const ref = db.collection(COL).doc(currentUid);
+    setSignedInUI(currentUser);
+    const uid = currentUser.uid;
+    const ref = db.collection(COL).doc(uid);
 
-    // One-time merge: pick newer of local vs remote, then write winner to both
+    // One-time merge on login
     let remote = [];
-    try {
-      const snap = await ref.get();
-      remote = snap?.exists ? (snap.data().items || []) : [];
-    } catch {
-      remote = [];
-    }
+    try { remote = await readRemote(uid); } catch { remote = []; }
+    const local = await readLocal();
 
-    const local = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
     let winner = local;
-    if (remote.length && shouldUseRemote(local, remote)) {
-      winner = remote;
-    }
+    if (remote.length && isRemoteNewer(local, remote)) winner = remote;
 
+    // Apply winner both sides
     suppressLocalWatcher = true;
     await saveLocal(winner);
     suppressLocalWatcher = false;
+    try { await saveRemote(uid, winner); } catch {}
 
-    try { await saveRemote(currentUid, winner); } catch {}
-
-    // Live stream: whenever remote changes and is newer, apply to local
+    // Live stream: apply newer remote to local
     unsub = ref.onSnapshot((s) => {
       const incoming = s.data()?.items || [];
-      const currentLocal = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-      if (shouldUseRemote(currentLocal, incoming)) {
-        suppressLocalWatcher = true;
-        saveLocal(incoming).finally(() => { suppressLocalWatcher = false; });
-      }
+      readLocal().then(curr => {
+        if (isRemoteNewer(curr, incoming)) {
+          suppressLocalWatcher = true;
+          saveLocal(incoming).finally(() => { suppressLocalWatcher = false; });
+        }
+      });
     });
   });
 
-  // 8) API for inventory.js to call after local saves
+  // ---- 10) API for inventory.js to push local changes ----
   window.CloudSync = {
     save(list) {
-      if (!currentUid) return;           // Not signed in → local only
-      if (suppressLocalWatcher) return;  // Avoid echo when we just applied remote
-      saveRemote(currentUid, list).catch(() => {});
+      if (!currentUser) return;          // Not signed in → local only
+      if (suppressLocalWatcher) return;  // Avoid echo during remote->local apply
+      saveRemote(currentUser.uid, list).catch((e) => {
+        console.warn('[sync] save to cloud failed:', e);
+      });
     }
   };
 })();
