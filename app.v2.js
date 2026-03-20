@@ -33,23 +33,25 @@
 
   function round(x,d){var p=Math.pow(10,d||0);return (Math.round((x+Number.EPSILON)*p)/p).toFixed(d||0)}
 
-  function buildBaseSummary(o, allocated, adjustedBottles) {
-    var actual = adjustedBottles + allocated;
-    var dev = o.total ? (100*(actual-o.total)/o.total) : 0;
-    var lines = [
-      'Ride duration: ' + round(o.rideHours,2) + ' h',
-      'Carbs per hour: ' + round(o.cph,0) + ' g/h',
-      'Carb bottles: ' + o.nB,
-      'Malto (per bottle): ' + round(o.nB? o.maltoPowder/o.nB : 0,0) + ' g',
-      'Fructose (per bottle): ' + round(o.nB? o.fructosePowder/o.nB : 0,0) + ' g',
-      'Evolytes (per bottle): ' + round(o.nB? o.scoops/o.nB : 0,2) + ' scoops',
-      'Total carbs per bottle: ' + round(o.nB? adjustedBottles/o.nB : 0,0) + ' g',
-      'Total carbs (plan): ' + round(actual,0) + ' g',
-      'Delta vs target: ' + round(dev,1) + '%'
-    ];
-    return lines.join('
-');
-  }
+
+function buildBaseSummary(o, allocated, adjustedBottles) {
+  var actual = adjustedBottles + allocated;
+  var dev = o.total ? (100 * (actual - o.total) / o.total) : 0;
+
+  var lines = [
+    'Ride duration: ' + round(o.rideHours, 2) + ' h',
+    'Carbs per hour: ' + round(o.cph, 0) + ' g/h',
+    'Carb bottles: ' + o.nB,
+    'Malto (per bottle): ' + round(o.nB ? o.maltoPowder / o.nB : 0, 0) + ' g',
+    'Fructose (per bottle): ' + round(o.nB ? o.fructosePowder / o.nB : 0, 0) + ' g',
+    'Evolytes (per bottle): ' + round(o.nB ? o.scoops / o.nB : 0, 2) + ' scoops',
+    'Total carbs per bottle: ' + round(o.nB ? adjustedBottles / o.nB : 0, 0) + ' g',
+    'Total carbs (plan): ' + round(actual, 0) + ' g',
+    'Delta vs target: ' + round(dev, 1) + '%'
+  ];
+
+  return lines.join('\n');   // <-- this is the corrected line
+}
 
   function showSummary(){
     var o = calc();
