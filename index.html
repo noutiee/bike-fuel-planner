@@ -21,7 +21,7 @@
    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
    header{padding:14px 16px;background:var(--brand);color:#fff;position:sticky;top:0}
    h1{font-size:1.125rem;margin:0}
-   main{max-width:880px;margin:16px auto;padding:0 12px}
+   main{max-width:980px;margin:16px auto;padding:0 12px}
    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
    @media (max-width:720px){.grid{grid-template-columns:1fr}}
    fieldset{border:1px solid #e5e7eb;border-radius:10px;background:var(--card);padding:12px}
@@ -31,10 +31,12 @@
    input{width:180px;text-align:right;padding:8px 10px;border:1px solid #c7d0e0;border-radius:8px;background:#fff}
    button.primary{display:block;width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:600;margin:16px 0;font-size:1.05rem}
    .ghost{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:10px 12px}
+   /* Modal */
    #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 9999; }
    #overlay.show { display: flex; }
    #card { width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; background: #111827; color: #f9fafb; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.35); position: relative; overflow: hidden; }
-   #close { position: absolute; right: 10px; top: 10px; background: transparent; border: 0; color: #cbd5e1; font-size: 26px; cursor:pointer; }
+   #card header { background: transparent; color: #f9fafb; border-bottom: 1px solid rgba(255,255,255,.08); position: static; }
+   #close { position: absolute; right: 10px; top: 10px; background: transparent; border: 0; color: #cbd5e1; font-size: 26px; cursor: pointer; }
    #content { padding: 12px; overflow-y: auto; max-height: 60vh; }
    .row{background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin:8px 0}
    .actions{display:flex;gap:8px;justify-content:flex-end;padding:0 12px 12px}
@@ -65,17 +67,18 @@
 
 <main>
   <div class="grid">
+    <!-- Bike (existing) -->
     <fieldset>
-      <legend>Ride & Targets</legend>
+      <legend>Bike — Ride & Targets</legend>
       <label><span>Ride duration (h)</span><input id="rideHours" type="number" step="0.25" value="5"></label>
       <label><span>Carbs per hour (g/h)</span><input id="carbsPerHour" type="number" step="1" value="80"></label>
       <label><span># carb bottles</span><input id="numCarbBottles" type="number" step="1" value="2"></label>
       <label><span>Max carbs per bottle (g)</span><input id="maxBottleCarbs" type="number" step="1" value="120"></label>
-      <div class="hint">Gels are pulled from your inventory below (FEFO). Expired gels are allowed.</div>
+      <div class="hint">Gels are pulled from your inventory (smart weighting). Expired gels allowed.</div>
     </fieldset>
 
     <fieldset>
-      <legend>Mix ratio</legend>
+      <legend>Bike — Mix ratio</legend>
       <label><span>G part (malto)</span><input id="G" type="number" step="0.1" value="1"></label>
       <label><span>F part (fructose)</span><input id="F" type="number" step="0.1" value="0.8"></label>
       <label><span>Malto carb fraction (%)</span><input id="maltoFrac" type="number" step="1" value="95"></label>
@@ -83,15 +86,40 @@
     </fieldset>
 
     <fieldset>
-      <legend>Electrolytes</legend>
+      <legend>Bike — Electrolytes</legend>
       <label><span>Sodium per scoop (mg)</span><input id="sodiumPerScoop" type="number" step="100" value="5000"></label>
       <label><span>Target sodium (mg/h)</span><input id="targetSodiumPerHour" type="number" step="50" value="700"></label>
+    </fieldset>
+
+    <!-- Swim -->
+    <fieldset>
+      <legend>Swim</legend>
+      <label><span>Swim duration (h)</span><input id="swimHours" type="number" step="0.25" value="1"></label>
+      <label><span>Pre‑swim carbs (g)</span><input id="swimPreCarbs" type="number" step="5" value="0"></label>
+      <div class="hint">No fueling during swim; optional pre‑swim carbs will be pulled from inventory.</div>
+    </fieldset>
+
+    <!-- Run -->
+    <fieldset>
+      <legend>Run</legend>
+      <label><span>Run duration (h)</span><input id="runHours" type="number" step="0.25" value="1"></label>
+      <label><span>Carbs per hour (g/h)</span><input id="runCarbsPerHour" type="number" step="1" value="60"></label>
+      <label><span>Max gel size (g)</span><input id="runMaxGel" type="number" step="1" value="30"></label>
+      <div class="hint">Run plan uses gels only and excludes gels larger than the max size.</div>
+    </fieldset>
+
+    <!-- Bike gel preferences -->
+    <fieldset>
+      <legend>Bike — Gel Preferences</legend>
+      <label><span>Prefer larger gels</span><input id="bikePreferLarge" type="checkbox" checked></label>
+      <label><span>Expiry weighting horizon (days)</span><input id="expiryHorizonDays" type="number" step="5" value="60"></label>
+      <div class="hint">Near‑expiry gels get prioritized within this horizon; far‑out expiries are deprioritized if stock is scarce.</div>
     </fieldset>
   </div>
 
   <button class="primary" id="btnCalc">Calculate</button>
 
-  <!-- Inventory -->
+  <!-- Inventory section -->
   <section id="inventory-section" style="margin-top:16px">
     <fieldset>
       <legend>Gel Inventory</legend>
@@ -112,7 +140,14 @@
 
       <table id="inventory-table">
         <thead>
-          <tr><th>Gel</th><th>Carbs (g)</th><th>Caff (mg)</th><th>Expiry</th><th>Qty</th><th></th></tr>
+          <tr>
+            <th>Gel</th>
+            <th>Carbs (g)</th>
+            <th>Caff (mg)</th>
+            <th>Expiry</th>
+            <th>Qty</th>
+            <th></th>
+          </tr>
         </thead>
         <tbody id="inventory-tbody"></tbody>
       </table>
@@ -146,7 +181,7 @@
 <!-- Inventory helpers -->
 <script src="inventory.js"></script>
 
-<!-- App logic (calc + showSummary + SW registration) -->
+<!-- App logic (calc + triathlon showSummary + SW registration) -->
 <script>
   // Register SW (project scope)
   if ('serviceWorker' in navigator) {
@@ -172,13 +207,10 @@
     const total = rideHours * cph;
     const inBottlesRaw = Math.min(nB*maxB, total);
 
-    // Gels required after bottles
-    const gelsRequired = Math.max(0, total - inBottlesRaw);
-
     // Powder split for bottles
     const parts = G+F;
-    const fructoseCarbs  = parts ? inBottlesRaw * F / parts : 0;
-    const maltoCarbs     = parts ? inBottlesRaw * G / parts : 0;
+    const fructoseCarbs = parts ? inBottlesRaw * F / parts : 0;
+    const maltoCarbs    = parts ? inBottlesRaw * G / parts : 0;
     const fructosePowder = fructoseFrac ? fructoseCarbs / fructoseFrac : 0;
     const maltoPowder    = maltoFrac ? maltoCarbs / maltoFrac : 0;
 
@@ -187,7 +219,8 @@
 
     return {
       rideHours,cph,nB,maxB,G,F,maltoFrac,fructoseFrac,NaPer,NaH,
-      total,inBottlesRaw,gelsRequired,fructosePowder,maltoPowder,
+      total,inBottlesRaw,gelsRequired: Math.max(0, total - inBottlesRaw),
+      fructosePowder,maltoPowder,
       totalPowder: fructosePowder + maltoPowder,
       totalSodium: scoops*NaPer,
       scoops
@@ -210,72 +243,131 @@
       `Total carbs (plan): ${round(actual,0)} g`,
       `Δ vs target: ${round(dev,1)}%`
     ];
-    return lines.join('\n');
+    return lines.join('
+');
   }
 
-  function showSummary(){
+  function showSummary() {
+    // --- Bike (existing inputs) ---
     const o = calc();
 
-    // Allocate gels from inventory
-    const alloc = window.GelInventory.allocateFromInventory(o.gelsRequired);
-    const allocatedCarbs = (alloc.picks||[]).reduce((s,p)=>s+p.carbs,0);
-    const surplus = Math.max(0, allocatedCarbs - o.gelsRequired);
+    // --- Swim & Run inputs ---
+    const swimHours = parseFloat($("swimHours").value) || 0;
+    const swimPreCarbs = parseFloat($("swimPreCarbs").value) || 0;
 
-    // Reduce bottle carbs by surplus (not below 0)
-    const adjustedBottles = Math.max(0, o.inBottlesRaw - surplus);
+    const runHours = parseFloat($("runHours").value) || 0;
+    const runCPH   = parseFloat($("runCarbsPerHour").value) || 0;
+    const runMax   = parseFloat($("runMaxGel").value) || 30;
 
+    // Bike allocator preferences
+    const preferLarge = $("bikePreferLarge").checked;
+    const horizonDays = parseFloat($("expiryHorizonDays").value) || 60;
+
+    // --- Allocate per sport ---
+
+    // Swim: pre‑swim only
+    const swim = { hours: swimHours, preCarbs: swimPreCarbs };
+    const allocSwim = swim.preCarbs > 0
+      ? window.GelInventory.allocateFromInventory(swim.preCarbs, {
+          sport: 'swim', expiryHorizonDays: horizonDays, scarcityProtect: true
+        })
+      : { picks: [], shortage: 0 };
+
+    // Bike: keep bottle split; gels cover remainder with smart weighting
+    const gelsNeededBike = Math.max(0, o.total - o.inBottlesRaw);
+    const allocBike = window.GelInventory.allocateFromInventory(gelsNeededBike, {
+      sport: 'bike', preferLarge, expiryHorizonDays: horizonDays, scarcityProtect: true
+    });
+    const allocatedBikeCarbs = (allocBike.picks||[]).reduce((s,p)=>s+p.carbs,0);
+    const bikeSurplus = Math.max(0, allocatedBikeCarbs - gelsNeededBike);
+    const adjustedBottleCarbs = Math.max(0, o.inBottlesRaw - bikeSurplus);
+
+    // Run: gels only, with max gel size hard‑cap
+    const run = { hours: runHours, target: runHours * runCPH, cph: runCPH };
+    const allocRun = window.GelInventory.allocateFromInventory(run.target, {
+      sport: 'run', maxGelCarbs: runMax, expiryHorizonDays: horizonDays, scarcityProtect: true
+    });
+
+    // --- Build overlay content ---
+
+    const base = buildBaseSummary(o, allocatedBikeCarbs, adjustedBottleCarbs);
+
+    // Swim & Run quick lines
     const rows = [
-      `Ride duration: ${round(o.rideHours,2)} h`,
-      `Carbs per hour: ${round(o.cph,0)} g/h`,
-      `Carb bottles: ${o.nB}`,
-      `Malto (per bottle): ${round(o.nB? o.maltoPowder/o.nB : 0,0)} g`,
-      `Fructose (per bottle): ${round(o.nB? o.fructosePowder/o.nB : 0,0)} g`,
-      `Evolytes (per bottle): ${round(o.nB? o.scoops/o.nB : 0,2)} scoops`,
-      `Total carbs per bottle: ${round(o.nB? adjustedBottles/o.nB : 0,0)} g`,
-      `Total carbs (plan): ${round(adjustedBottles + allocatedCarbs,0)} g`,
-      `Δ vs target: ${round((o.total ? (100*((adjustedBottles + allocatedCarbs)-o.total)/o.total) : 0),1)}%`,
-      `\nTap Copy to put this summary on your clipboard.`
+      `Bike — ${round(o.rideHours,2)} h, bottles: ${round(o.rideHours ? adjustedBottleCarbs/o.rideHours : 0,0)} g/h, gels: ${round(allocatedBikeCarbs,0)} g`,
+      `Swim — ${round(swim.hours,2)} h, pre‑carbs: ${round(swim.preCarbs,0)} g`,
+      `Run — ${round(run.hours,2)} h @ ${round(run.cph,0)} g/h → ${round(run.target,0)} g`,
+      `Δ vs bike target: ${round((o.total ? (100*((adjustedBottleCarbs + allocatedBikeCarbs)-o.total)/o.total) : 0),1)}%`,
+      `Tap “Copy summary” to copy all details.`
     ];
-    ['s1','s2','s3','s4','s5'].forEach((id,i)=>{ (document.getElementById(id)||{}).textContent = rows[i] || '' });
+    ['s1','s2','s3','s4','s5'].forEach((id,i)=>{ ($(id)||{}).textContent = rows[i] || '' });
 
-    // Inventory pack list
-    const invRow = document.getElementById("sInv");
+    // Pack lists
     function toDMY(iso){
       const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (!m) return iso;
-      const [_, y, mo, d] = m; return `${d}/${mo}/${y.slice(2)}`;
+      if (!m) return iso; const [_, y, mo, d] = m; return `${d}/${mo}/${y.slice(2)}`;
     }
-    const list = (alloc.picks||[]).length
-      ? `<ul>` + alloc.picks.map(p => `<li>${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})</li>`).join('') + `</ul>`
-      : '<p>No gels matched in inventory.</p>';
-    invRow.innerHTML = `
-      <h3 style="margin:0 0 6px">Pack list (from inventory)</h3>
-      ${list}
-      ${(alloc.shortage > 0) ? `<p><strong>Shortage:</strong> ${alloc.shortage} g carbs still needed → add/buy extra gels.</p>` : `<p>You're fully covered by inventory 🎉</p>`}
-      <button id="btnDeduct" class="ghost" type="button">Mark as packed (deduct)</button>`;
+    function listHtml(title, alloc) {
+      if (!alloc || !(alloc.picks||[]).length) return `<h3>${title}</h3><p>No gels allocated.</p>`;
+      const ul = alloc.picks.map(p => `<li>${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})</li>`).join('');
+      const shortage = (alloc.shortage > 0) ? `<p><strong>Shortage:</strong> ${alloc.shortage} g still needed.</p>` : `<p>Fully covered ✅</p>`;
+      return `<h3>${title}</h3><ul>${ul}</ul>${shortage}`;
+    }
 
-    document.getElementById("btnDeduct")?.addEventListener('click', () => {
-      GelInventory.deductPlanFromInventory(alloc.picks);
+    const invRow = $("sInv");
+    invRow.innerHTML = `
+      ${listHtml('Swim — pre‑carbs from inventory', allocSwim)}
+      ${listHtml('Bike — gels from inventory', allocBike)}
+      ${listHtml('Run — gels from inventory', allocRun)}
+      <button id="btnDeduct" class="ghost" type="button">Mark as packed (deduct all)</button>
+    `;
+
+    $("btnDeduct")?.addEventListener('click', () => {
+      const picksAll = []
+        .concat(allocSwim?.picks || [])
+        .concat(allocBike?.picks || [])
+        .concat(allocRun?.picks  || []);
+      GelInventory.deductPlanFromInventory(picksAll);
       GelInventory.renderTable();
       alert('Inventory updated ✅');
     });
 
-    const overlay = document.getElementById("overlay");
+    const overlay = $("overlay");
     overlay.classList.add('show');
 
-    const base = buildBaseSummary(o, allocatedCarbs, adjustedBottles);
-    let invText = '\n\nPack list (inventory):\n';
-    if ((alloc.picks||[]).length) invText += alloc.picks.map(p => `- ${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})`).join('\n');
-    if (alloc.shortage > 0) invText += `\nShortage: ${alloc.shortage} g carbs still needed.`;
-    overlay.dataset.summary = base + invText;
+    // Clipboard
+    let clip = base + '
+
+'
+      + `Swim: ${round(swim.hours,2)} h, pre‑carbs: ${round(swim.preCarbs,0)} g` + '
+'
+      + `Run:  ${round(run.hours,2)} h @ ${round(run.cph,0)} g/h → ${round(run.target,0)} g` + '
+
+'
+      + 'Pack lists:';
+
+    const toLines = (alloc, title) => {
+      let t = `
+${title}:
+`;
+      if ((alloc.picks||[]).length) {
+        t += alloc.picks.map(p => `- ${p.used} × ${p.name} (≈${p.carbs} g, exp. ${toDMY(p.expiry)})`).join('
+');
+        if (alloc.shortage > 0) t += `
+Shortage: ${alloc.shortage} g`;
+      } else { t += '- None'; }
+      return t;
+    };
+
+    clip += toLines(allocSwim, 'Swim') + toLines(allocBike, 'Bike') + toLines(allocRun, 'Run');
+    overlay.dataset.summary = clip;
   }
 
-  // Wire up buttons
-  document.getElementById("btnCalc").addEventListener('click', showSummary);
-  document.getElementById("btnClose").addEventListener('click', () => document.getElementById("overlay").classList.remove('show'));
-  document.getElementById("close").addEventListener('click', () => document.getElementById("overlay").classList.remove('show'));
-  document.getElementById("btnCopy").addEventListener('click', () => {
-    const t = document.getElementById("overlay").dataset.summary || '';
+  $("btnCalc").addEventListener('click', showSummary);
+  $("btnClose").addEventListener('click', () => $("overlay").classList.remove('show'));
+  $("close").addEventListener('click', () => $("overlay").classList.remove('show'));
+  $("btnCopy").addEventListener('click', () => {
+    const t = $("overlay").dataset.summary || '';
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(t).then(() => alert('Summary copied')).catch(fallback);
     } else { fallback(); }

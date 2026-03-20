@@ -6,15 +6,13 @@
 
   // ---- Date helpers (DD/MM/YY <-> ISO) ----
   function toISOFromDMY(input) {
-    // Accepts DD/MM/YY or DD/MM/YYYY; returns 'YYYY-MM-DD'
     if (!input) return '';
     const m = String(input).trim().match(/^([0-3]?\d)\/([0-1]?\d)\/(\d{2}|\d{4})$/);
     if (!m) return '';
     let [_, d, mo, y] = m;
     d = d.padStart(2, '0'); mo = mo.padStart(2, '0');
-    if (y.length === 2) y = '20' + y; // interpret 2-digit year as 20YY
+    if (y.length === 2) y = '20' + y;
     const iso = `${y}-${mo}-${d}`;
-    // Basic validity check
     const test = new Date(iso);
     if (isNaN(test.getTime())) return '';
     return iso;
@@ -24,7 +22,7 @@
     const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return '';
     const [_, y, mo, d] = m;
-    return `${d}/${mo}/${y.slice(2)}`; // DD/MM/YY
+    return `${d}/${mo}/${y.slice(2)}`;
   }
   function daysUntilISO(iso) {
     const ms = (new Date(iso) - new Date());
@@ -36,15 +34,12 @@
     try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? []; }
     catch { return []; }
   }
-
-  // 🔄 UPDATED: also push to cloud (if signed in) after local save
   function saveInventory(list) {
     localStorage.setItem(LS_KEY, JSON.stringify(list));
-    window.CloudSync?.save(list); // <= pushes to Firestore when signed in
+    // Cloud sync if available
+    window.CloudSync?.save(list);
   }
-
   function addItem(item) { const l = loadInventory(); l.push(item); saveInventory(l); }
-
   function updateItem(id, patch) {
     const l = loadInventory();
     const i = l.findIndex(x => x.id === id);
@@ -53,37 +48,93 @@
       saveInventory(l);
     }
   }
-
   function deleteItem(id) { saveInventory(loadInventory().filter(x => x.id !== id)); }
 
-  // ---------- FEFO allocation (expired allowed) ----------
-  function allocateFromInventory(requiredCarbs) {
-    const inv = loadInventory()
-      .sort((a,b) => a.expiry.localeCompare(b.expiry))
-      .map(x => ({ ...x }));
+  // ---------- SMART allocation ----------
+  /**
+   * Allocate gels from inventory toward required carbs using a scoring model.
+   * Options:
+   *  - sport: 'bike' | 'run' | 'swim'
+   *  - maxGelCarbs (run): default 30
+   *  - preferLarge (bike): default true
+   *  - expiryHorizonDays: default 60
+   *  - scarcityProtect: default true
+   */
+  function allocateSmart(requiredCarbs, opts = {}) {
+    const {
+      sport = 'bike',
+      maxGelCarbs = 30,
+      preferLarge = true,
+      expiryHorizonDays = 60,
+      scarcityProtect = true,
+      scarcityThreshold = 2,
+      scarcityExpirySafeDays = 90,
+      bigGelBenchmark = 40
+    } = opts;
+
+    const list = loadInventory().map(x => ({ ...x }));
+
+    const candidates = list.filter(g => {
+      if ((g.quantity||0) <= 0 || (g.carbsPerGel||0) <= 0) return false;
+      if (sport === 'run' && g.carbsPerGel > maxGelCarbs) return false;
+      return true;
+    });
+
+    function score(g) {
+      const d = daysUntilISO(g.expiry);
+      let expiryUrgency;
+      if (isNaN(d))      expiryUrgency = 0.6;
+      else if (d <= 0)   expiryUrgency = 1.2;
+      else               expiryUrgency = Math.max(0, Math.min(1, (expiryHorizonDays - d) / expiryHorizonDays));
+
+      let sizePref = 0.5;
+      if (sport === 'bike') {
+        sizePref = Math.max(0, Math.min(1, g.carbsPerGel / bigGelBenchmark));
+        if (!preferLarge) sizePref = 0.5;
+      } else if (sport === 'run') {
+        sizePref = g.carbsPerGel <= maxGelCarbs ? 1 : Math.max(0, 1 - (g.carbsPerGel - maxGelCarbs)/maxGelCarbs);
+      } else if (sport === 'swim') {
+        sizePref = Math.max(0, Math.min(1, (35 - Math.abs(g.carbsPerGel - 30)) / 35));
+      }
+
+      let scarcityPenalty = 0;
+      if (scarcityProtect) {
+        if ((g.quantity||0) <= scarcityThreshold && !isNaN(d) && d > scarcityExpirySafeDays) {
+          scarcityPenalty = 0.3;
+        }
+      }
+
+      let wExp = 0.5, wSize = 0.4, wScar = 0.2;
+      if (sport === 'run')  { wExp = 0.5; wSize = 0.6; wScar = 0.2; }
+      if (sport === 'swim') { wExp = 0.7; wSize = 0.3; wScar = 0.2; }
+
+      return (wExp*expiryUrgency + wSize*sizePref - wScar*scarcityPenalty);
+    }
+
+    candidates.sort((a, b) => score(b) - score(a));
 
     let remaining = Math.max(0, Math.round(requiredCarbs));
     const picks = [];
 
-    for (const gel of inv) {
+    for (const g of candidates) {
       if (remaining <= 0) break;
-      if ((gel.quantity||0) <= 0 || (gel.carbsPerGel||0) <= 0) continue;
-      const gelsNeeded = Math.ceil(remaining / gel.carbsPerGel);
-      const used = Math.min(gelsNeeded, gel.quantity);
-      if (used > 0) {
+      const perGel = g.carbsPerGel;
+      const canUse = Math.min(g.quantity, Math.ceil(remaining / perGel));
+      if (canUse > 0) {
         picks.push({
-          id: gel.id,
-          name: gel.name,
-          used,
-          carbs: used * gel.carbsPerGel,
-          expiry: gel.expiry,
-          caffeineMg: gel.caffeineMg ?? 0
+          id: g.id, name: g.name, used: canUse, carbs: canUse * perGel,
+          expiry: g.expiry, caffeineMg: g.caffeineMg ?? 0
         });
-        gel.quantity -= used;
-        remaining = Math.max(0, remaining - used * gel.carbsPerGel);
+        g.quantity -= canUse;
+        remaining = Math.max(0, remaining - canUse * perGel);
       }
     }
-    return { picks, shortage: remaining, updatedInventory: inv };
+
+    return { picks, shortage: remaining, updatedInventory: list };
+  }
+
+  function allocateFromInventory(requiredCarbs, opts) {
+    return allocateSmart(requiredCarbs, opts);
   }
 
   function deductPlanFromInventory(picks) {
@@ -203,7 +254,7 @@
     });
     $('toggle-hide-expired')?.addEventListener('change', renderTable);
 
-    // ----- Optional: Export / Import helpers -----
+    // Optional: export/import
     const btnExport = $('btn-export');
     const fileImport = $('file-import');
 
@@ -224,7 +275,6 @@
         const text = await file.text();
         const parsed = JSON.parse(text);
         if (!Array.isArray(parsed)) throw new Error('Invalid JSON format (expected an array).');
-        // Basic shape check (non-fatal)
         const cleaned = parsed.map(x => ({
           id: x.id || uid(),
           name: String(x.name || '').trim(),
@@ -244,14 +294,13 @@
         e.target.value = '';
       }
     });
-    // ----- End optional helpers -----
   }
 
   // Public API
   window.GelInventory = {
     loadInventory,
     saveInventory,
-    allocateFromInventory,
+    allocateFromInventory, // wraps allocateSmart
     deductPlanFromInventory,
     renderTable
   };
