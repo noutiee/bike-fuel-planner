@@ -57,7 +57,7 @@
 <main>
   <div class="grid">
     <fieldset>
-      <legend>Bike — Ride & Targets</legend>
+      <legend>Bike - Ride & Targets</legend>
       <label><span>Ride duration (h)</span><input id="rideHours" type="number" step="0.25" value="5"></label>
       <label><span>Carbs per hour (g/h)</span><input id="carbsPerHour" type="number" step="1" value="80"></label>
       <label><span># carb bottles</span><input id="numCarbBottles" type="number" step="1" value="2"></label>
@@ -66,7 +66,7 @@
     </fieldset>
 
     <fieldset>
-      <legend>Bike — Mix ratio</legend>
+      <legend>Bike - Mix ratio</legend>
       <label><span>G part (malto)</span><input id="G" type="number" step="0.1" value="1"></label>
       <label><span>F part (fructose)</span><input id="F" type="number" step="0.1" value="0.8"></label>
       <label><span>Malto carb fraction (%)</span><input id="maltoFrac" type="number" step="1" value="95"></label>
@@ -74,7 +74,7 @@
     </fieldset>
 
     <fieldset>
-      <legend>Bike — Electrolytes</legend>
+      <legend>Bike - Electrolytes</legend>
       <label><span>Sodium per scoop (mg)</span><input id="sodiumPerScoop" type="number" step="100" value="5000"></label>
       <label><span>Target sodium (mg/h)</span><input id="targetSodiumPerHour" type="number" step="50" value="700"></label>
     </fieldset>
@@ -95,7 +95,7 @@
     </fieldset>
 
     <fieldset>
-      <legend>Bike — Gel Preferences</legend>
+      <legend>Bike - Gel Preferences</legend>
       <label><span>Prefer larger gels</span><input id="bikePreferLarge" type="checkbox" checked></label>
       <label><span>Expiry weighting horizon (days)</span><input id="expiryHorizonDays" type="number" step="5" value="60"></label>
       <div class="hint">Near-expiry gels get prioritized within this horizon; far-out expiries are deprioritized if stock is scarce.</div>
@@ -154,7 +154,7 @@
 </div>
 
 <script src="sync.js"></script>
-<script src="inventory.js"></script>
+<script src="inventory.v2.js"></script>
 <script>
   // SW
   if ('serviceWorker' in navigator) {
@@ -246,7 +246,7 @@
     function toDMY(iso){ var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return iso; var y=m[1], mo=m[2], d=m[3]; return d + '/' + mo + '/' + y.slice(2); }
     function listHtml(title, alloc) {
       if (!alloc || !(alloc.picks||[]).length) return '<h3>'+title+'</h3><p>No gels allocated.</p>';
-      var ul = alloc.picks.map(function(p){ return '<li>'+p.used+' x '+p.name+' (~'+p.carbs+' g, exp. '+toDMY(p.expiry)+')</li>'; }).join('');
+      var ul = (alloc.picks||[]).map(function(p){ return '<li>'+p.used+' x '+p.name+' (~'+p.carbs+' g, exp. '+toDMY(p.expiry)+')</li>'; }).join('');
       var shortage = (alloc.shortage > 0) ? '<p><strong>Shortage:</strong> '+alloc.shortage+' g still needed.</p>' : '<p>Fully covered</p>';
       return '<h3>'+title+'</h3><ul>'+ul+'</ul>'+shortage;
     }
@@ -262,7 +262,10 @@
     var btn = $("btnDeduct");
     if (btn){
       btn.addEventListener('click', function(){
-        var picksAll = [].concat(allocSwim && allocSwim.picks || [], allocBike && allocBike.picks || [], allocRun && allocRun.picks || []);
+        var picksAll = [];
+        if (allocSwim && allocSwim.picks) { picksAll = picksAll.concat(allocSwim.picks); }
+        if (allocBike && allocBike.picks) { picksAll = picksAll.concat(allocBike.picks); }
+        if (allocRun && allocRun.picks)  { picksAll = picksAll.concat(allocRun.picks); }
         GelInventory.deductPlanFromInventory(picksAll);
         GelInventory.renderTable();
         alert('Inventory updated');
