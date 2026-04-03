@@ -128,7 +128,7 @@ var gelCarbsTotal = Math.round(
   allocSwim.picks
     .concat(allocBike.picks, allocRun.picks)
     .reduce(function (sum, p) {
-      return sum + (p.used * p.carbs);
+      return sum + p.carbs;
     }, 0)
 );
 
