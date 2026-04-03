@@ -1,6 +1,6 @@
 
 // app.js – Main application logic (UI + calculation + summary)
-// ES5 compatible, no HTML entities
+// ES5 compatible, NO HTML entities
 
 (function () {
   function $(id) { return document.getElementById(id); }
@@ -24,7 +24,7 @@
 
   linkSlider('swimSlider', 'swimMinutes', 60);
   linkSlider('bikeSlider', 'bikeMinutes', 300);
-  linkSlider('runSlider',  'runMinutes',  120);
+  linkSlider('runSlider',  'runMinutes', 120);
 
   /* -----------------------------
      +/- buttons for carbs/hour
@@ -58,7 +58,6 @@
   ------------------------------ */
   function calculateAndShowSummary() {
 
-    // ---- Inputs
     var swimHours = minutesToHours('swimMinutes');
     var bikeHours = minutesToHours('bikeMinutes');
     var runHours  = minutesToHours('runMinutes');
@@ -76,18 +75,16 @@
     var expiryInput = Number($('expiryHorizonDays').value);
     var totalInventory = GelInventory.loadInventory()
       .reduce(function (s, g) { return s + (g.quantity || 0); }, 0);
+
     var expiryHorizon = (expiryInput > 0) ? expiryInput : totalInventory;
 
-    // ---- Targets
     var swimTarget = swimHours * swimCPH;
     var bikeTarget = bikeHours * bikeCPH;
-    var runTarget  = runHours  * runCPH;
+    var runTarget  = runHours * runCPH;
 
-    // ---- Bottles
     var bikeBottleCarbs = Math.min(bikeTarget, numBottles * maxBottleCarbs);
     var bikeGelTarget   = Math.max(0, bikeTarget - bikeBottleCarbs);
 
-    // ---- Inventory allocation
     var allocSwim = swimTarget > 0
       ? GelInventory.allocateFromInventory(swimTarget, {
           sport: 'swim',
@@ -107,31 +104,16 @@
       expiryHorizonDays: expiryHorizon
     });
 
-    /* -----------------------------
-       UI SUMMARY
-    ------------------------------ */
-    $('s1').textContent =
-      'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
+    $('s1').textContent = 'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
+    $('s2').textContent = 'Bike: ' + round(bikeHours, 2) + ' h → ' + round(bikeBottleCarbs, 0) + ' g bottles + ' + round(bikeGelTarget, 0) + ' g gels';
+    $('s3').textContent = 'Run: '  + round(runHours, 2) + ' h → ' + round(runTarget, 0) + ' g';
+    $('s4').textContent = 'Inventory usage calculated';
+    $('s5').textContent = 'Tap Copy to copy full summary';
 
-    $('s2').textContent =
-      'Bike: ' + round(bikeHours, 2) + ' h → ' +
-      round(bikeBottleCarbs, 0) + ' g (bottles) + ' +
-      round(bikeGelTarget, 0) + ' g (gels)';
-
-    $('s3').textContent =
-      'Run: ' + round(runHours, 2) + ' h → ' + round(runTarget, 0) + ' g';
-
-    $('s4').textContent =
-      'Inventory usage calculated';
-
-    $('s5').textContent =
-      'Tap Copy to copy full summary';
-
-    /* -----------------------------
-       Inventory breakdown
-    ------------------------------ */
     function list(title, alloc) {
-      if (!alloc.picks.length) return '<h3>' + title + '</h3><p>None</p>';
+      if (!alloc.picks.length) {
+        return '<h3>' + title + '</h3><p>None</p>';
+      }
 
       var items = alloc.picks.map(function (p) {
         return '<li>' + p.used + ' × ' + p.name + ' (' + p.carbs + ' g)</li>';
@@ -149,10 +131,7 @@
     var btnDeduct = $('btnDeduct');
     if (btnDeduct) {
       btnDeduct.onclick = function () {
-        var all = []
-          .concat(allocSwim.picks)
-          .concat(allocBike.picks)
-          .concat(allocRun.picks);
+        var all = [].concat(allocSwim.picks, allocBike.picks, allocRun.picks);
         GelInventory.deductPlanFromInventory(all);
         GelInventory.renderTable();
         alert('Inventory updated');
@@ -162,12 +141,14 @@
     $('overlay').classList.add('show');
   }
 
-  /* -----------------------------
-     Wire Calculate button
-  ------------------------------ */
   var btnCalc = $('btnCalc');
-  if (btnCalc) {
-    btnCalc.addEventListener('click', calculateAndShowSummary);
+  if (btnCalc) btnCalc.addEventListener('click', calculateAndShowSummary);
+
+  var closeBtn = $('close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      $('overlay').classList.remove('show');
+    });
   }
 
 })();
