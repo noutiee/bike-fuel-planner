@@ -141,14 +141,25 @@
     $('overlay').classList.add('show');
   }
 
-  var btnCalc = $('btnCalc');
-  if (btnCalc) btnCalc.addEventListener('click', calculateAndShowSummary);
+  
+document.addEventListener('DOMContentLoaded', function () {
 
-  var closeBtn = $('close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function () {
-      $('overlay').classList.remove('show');
+  var btnCalc = document.getElementById('btnCalc');
+  if (btnCalc) {
+    btnCalc.addEventListener('click', function () {
+      console.log('Calculate clicked'); // diagnostic
+      calculateAndShowSummary();
     });
   }
+
+  var closeBtn = document.getElementById('close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      document.getElementById('overlay').classList.remove('show');
+    });
+  }
+
+});
+
 
 })();
