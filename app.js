@@ -139,8 +139,10 @@ $('s4').textContent =
   gelCarbsTotal + ' g from gels';
 
 
+
 $('s5').innerHTML =
-  '<button class="ghost" id="btnCopySummary">Copy summary</button>
+  '<button class="ghost" id="btnCopySummary">Copy summary</button>';
+
 
 // Copy summary to clipboard
 document.getElementById('btnCopySummary').onclick = function () {
