@@ -142,15 +142,19 @@
   }
 
   
+
 document.addEventListener('DOMContentLoaded', function () {
 
   var btnCalc = document.getElementById('btnCalc');
-  if (btnCalc) {
-    btnCalc.addEventListener('click', function () {
-      console.log('Calculate clicked'); // diagnostic
-      calculateAndShowSummary();
-    });
+  if (!btnCalc) {
+    console.warn('btnCalc not found');
+    return;
   }
+
+  btnCalc.addEventListener('click', function () {
+    console.log('✅ Calculate clicked');
+    calculateAndShowSummary();
+  });
 
   var closeBtn = document.getElementById('close');
   if (closeBtn) {
@@ -160,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 });
+
 
 
 })();
