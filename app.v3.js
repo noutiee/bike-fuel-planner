@@ -24,6 +24,9 @@
     i.value=Math.max(0,v+step);
   });
 
-  document.getElementById('btnCalc')
-    .addEventListener('click', function(){ alert('Calculation logic unchanged – hooked into existing showSummary()'); });
-})();
+ 
+var btnCalc = document.getElementById('btnCalc');
+if (btnCalc && typeof showSummary === 'function') {
+  btnCalc.addEventListener('click', showSummary);
+}
+
