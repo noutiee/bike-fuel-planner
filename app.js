@@ -56,11 +56,21 @@
   /* -----------------------------
      MAIN CALCULATION
   ------------------------------ */
-  function calculateAndShowSummary() {
+ 
+function calculateAndShowSummary() {
 
-    var swimHours = minutesToHours('swimMinutes');
-    var bikeHours = minutesToHours('bikeMinutes');
-    var runHours  = minutesToHours('runMinutes');
+  // ✅ Open UI immediately
+  $('overlay').classList.add('show');
+  console.log('✅ Overlay opened');
+
+  // ⬇️ Everything below is allowed to fail without hiding the UI
+
+  var swimHours = minutesToHours('swimMinutes');
+  var bikeHours = minutesToHours('bikeMinutes');
+  var runHours  = minutesToHours('runMinutes');
+
+  // ... rest of logic
+
 
     var swimCPH = Number($('swimCPH').value) || 0;
     var bikeCPH = Number($('bikeCPH').value) || 0;
