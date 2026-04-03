@@ -27,9 +27,10 @@
     i.value = Math.max(0, v + step);
   });
 
-  // ✅ Correct JS operator here (NOT HTML-escaped)
+  // 🔗 Re-wire Calculate → existing logic
   var btnCalc = document.getElementById('btnCalc');
   if (btnCalc && typeof showSummary === 'function') {
     btnCalc.addEventListener('click', showSummary);
   }
 })();
+``
