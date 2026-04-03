@@ -29,4 +29,3 @@ var btnCalc = document.getElementById('btnCalc');
 if (btnCalc && typeof showSummary === 'function') {
   btnCalc.addEventListener('click', showSummary);
 }
-
