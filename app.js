@@ -147,8 +147,6 @@ function calculateAndShowSummary() {
         alert('Inventory updated');
       };
     }
-
-    $('overlay').classList.add('show');
   }
 
   
