@@ -117,8 +117,42 @@ function calculateAndShowSummary() {
     $('s1').textContent = 'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
     $('s2').textContent = 'Bike: ' + round(bikeHours, 2) + ' h → ' + round(bikeBottleCarbs, 0) + ' g bottles + ' + round(bikeGelTarget, 0) + ' g gels';
     $('s3').textContent = 'Run: '  + round(runHours, 2) + ' h → ' + round(runTarget, 0) + ' g';
-    $('s4').textContent = 'Inventory usage calculated';
-    $('s5').textContent = 'Tap Copy to copy full summary';
+  
+// ---- Totals summary ----
+
+// Total carbs from bottles (already known)
+var bottleCarbsTotal = Math.round(bikeBottleCarbs);
+
+// Total carbs from gels (from inventory allocation)
+var gelCarbsTotal = Math.round(
+  allocSwim.picks
+    .concat(allocBike.picks, allocRun.picks)
+    .reduce(function (sum, p) {
+      return sum + (p.used * p.carbs);
+    }, 0)
+);
+
+// Write totals into summary row
+$('s4').textContent =
+  'Total carbs: ' +
+  bottleCarbsTotal + ' g from bottles + ' +
+  gelCarbsTotal + ' g from gels';
+
+
+$('s5').innerHTML =
+  '<button class="ghost" id="btnCopySummary">Copy summary</button>
+
+// Copy summary to clipboard
+document.getElementById('btnCopySummary').onclick = function () {
+  var text =
+    $('s1').innerText + '\n' +
+    $('s2').innerText + '\n' +
+    $('s3').innerText + '\n' +
+    $('s4').innerText;
+
+  navigator.clipboard.writeText(text);
+};
+
 
     function list(title, alloc) {
       if (!alloc.picks.length) {
