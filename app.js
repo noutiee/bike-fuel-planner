@@ -124,17 +124,19 @@ var gels = [];
 inventory.forEach(function (item) {
   if (!item.quantity || !item.carbs) return;
 
-  var perGel = item.carbs / item.quantity;
 
-  for (var i = 0; i < item.quantity; i++) {
- 
-gels.push({
-  name: item.name,
-  carbs: perGel,
-  used: 1
-});
-  }
-});
+var perGel = item.carbsPerGel;
+
+for (var i = 0; i < item.quantity; i++) {
+  gels.push({
+    id: item.id,
+    name: item.name,
+    carbs: perGel,
+    expiry: item.expiry,      // ISO string
+    caffeineMg: item.caffeineMg || 0,
+    used: 1
+  });
+}
 
 // Result buckets
 var allocSwim = { picks: [] };
@@ -142,10 +144,28 @@ var allocRun  = { picks: [] };
 var allocBike = { picks: [] };
 
 // Helper: discipline preference multiplier
+
 function preferenceBoost(discipline, gel) {
-  if (discipline === 'bike' && gel.carbs >= 35) return 1.25;
-  if (discipline === 'run'  && gel.carbs >= 25 && gel.carbs <= 35) return 1.15;
-  return 1.0;
+  var boost = 1.0;
+
+  // Discipline size preferences
+  if (discipline === 'bike' && gel.carbs >= 35) {
+    boost *= 1.25;
+  }
+
+  if (discipline === 'run' && gel.carbs >= 25 && gel.carbs <= 35) {
+    boost *= 1.15;
+  }
+
+  // Expiry preference (soft, never forced)
+  if (gel.expiry) {
+    var days = Math.ceil((new Date(gel.expiry) - new Date()) / (1000 * 60 * 60 * 24));
+    if (!isNaN(days) && days <= 30) {
+      boost *= 1.2;
+    }
+  }
+
+  return boost;
 }
 
 // Helper: benefit of assigning gel to discipline
