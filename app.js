@@ -64,25 +64,99 @@ function gelSummary(picks) {
   };
 }
 
-function renderDisciplineSummary(title, hours, target, gelPicks, bottleCarbs) {
+// ---------- Summary grid renderers ----------
+
+function renderSummaryHeader() {
+  return (
+    '<div class="summary-grid header">' +
+      '<div>Discipline</div>' +
+      '<div class="summary-cell center">Duration</div>' +
+      '<div class="summary-cell center">Target</div>' +
+      '<div>Gels</div>' +
+      '<div class="summary-cell center">Bottles</div>' +
+      '<div class="summary-cell center">Total</div>' +
+    '</div>'
+  );
+}
+
+function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
+  if (!hours || hours <= 0) return '';
+
   var gels = gelSummary(gelPicks);
   var gelText = gels.count
     ? gels.count + ' × ' + gels.perGel + ' g = ' + gels.carbs + ' g'
-    : '0 g';
+    : '–';
 
   var total = gels.carbs + bottleCarbs;
 
   return (
-    '<div class="summary-block">' +
-      '<h3>' + title + '</h3>' +
-      '<p>Duration: ' + round(hours, 2) + ' h</p>' +
-      '<p>Target carbs: ' + Math.round(target) + ' g</p>' +
-      '<p>Gels: ' + gelText + '</p>' +
-      '<p>Bottles: ' + bottleCarbs + ' g</p>' +
-      '<p><strong>Total carbs: ' + total + ' g</strong></p>' +
+    '<div class="summary-grid row">' +
+      '<div><strong>' + label + '</strong></div>' +
+      '<div class="summary-cell center">' + round(hours, 2) + ' h</div>' +
+      '<div class="summary-cell center">' + Math.round(target) + ' g</div>' +
+      '<div>' + gelText + '</div>' +
+      '<div class="summary-cell center">' +
+        (bottleCarbs ? bottleCarbs + ' g' : '–') +
+      '</div>' +
+      '<div class="summary-cell center">' + total + ' g</div>' +
     '</div>'
   );
 }
+
+function renderSummaryTotalRow(target, actual) {
+  return (
+    '<div class="summary-grid total">' +
+      '<div><strong>Total</strong></div>' +
+      '<div></div>' +
+      '<div class="summary-cell center">' + target + ' g</div>' +
+      '<div></div>' +
+      '<div></div>' +
+      '<div class="summary-cell center">' + actual + ' g</div>' +
+    '</div>'
+  );
+}
+
+function renderOverview(swimH, bikeH, runH, allocSwim, allocBike, allocRun, bottleCarbs, targetTotal, actualTotal) {
+  var totalHours = round(swimH + bikeH + runH, 2);
+
+  var allGels = allocSwim.picks
+    .concat(allocBike.picks, allocRun.picks);
+
+  var byName = {};
+  allGels.forEach(function (g) {
+    if (!byName[g.name]) byName[g.name] = { count: 0, carbs: 0 };
+    byName[g.name].count += 1;
+    byName[g.name].carbs += g.carbs;
+  });
+
+  var gelList = Object.keys(byName).map(function (name) {
+    var g = byName[name];
+    return '<li>' + name + ': ' + g.count + ' gel' +
+      (g.count > 1 ? 's' : '') +
+      ' (' + Math.round(g.carbs) + ' g)</li>';
+  }).join('');
+
+  var html =
+    '<div class="summary-overview">' +
+      '<h3>Plan overview</h3>' +
+      '<p><strong>Total duration:</strong> ' + totalHours + ' h</p>' +
+      (gelList ? '<p><strong>Total gels:</strong></p><ul>' + gelList + '</ul>' : '');
+
+  if (bottleCarbs > 0) {
+    html += '<p><strong>Total bottles:</strong> ' + bottleCarbs + ' g</p>';
+  }
+
+  html +=
+      '<p><strong>Target:</strong> ' + targetTotal + ' g</p>' +
+      '<p><strong>Actual:</strong> ' + actualTotal + ' g</p>' +
+      '<p><strong>Difference:</strong> ' +
+        (actualTotal - targetTotal > 0 ? '+' : '') +
+        (actualTotal - targetTotal) + ' g</p>' +
+    '</div>';
+
+  return html;
+}
+
   /* -----------------------------
      MAIN CALCULATION
   ------------------------------ */
@@ -277,29 +351,6 @@ console.log(
 );
 console.log('------------------------');
 
-$('sSummary').innerHTML =
-  renderDisciplineSummary(
-    'Swim',
-    swimHours,
-    swimTarget,
-    allocSwim.picks,
-    0
-  ) +
-  renderDisciplineSummary(
-    'Bike',
-    bikeHours,
-    bikeTarget,
-    allocBike.picks,
-    bikeBottleCarbs
-  ) +
-  renderDisciplineSummary(
-    'Run',
-    runHours,
-    runTarget,
-    allocRun.picks,
-    0
-  );
-
 // ---- Totals summary ----
 
 // Total carbs from bottles (already known)
@@ -325,6 +376,28 @@ var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
 // Difference (positive = surplus, negative = shortage)
 var carbDelta = actualCarbsTotal - targetCarbsTotal;
 
+$('sSummary').innerHTML =
+  renderSummaryHeader() +
+  renderSummaryRow('Swim', swimHours, swimTarget, allocSwim.picks, 0) +
+  renderSummaryRow('Bike', bikeHours, bikeTarget, allocBike.picks, bikeBottleCarbs) +
+  renderSummaryRow('Run',  runHours,  runTarget,  allocRun.picks, 0);
+
+$('sSummaryTotal').innerHTML =
+  renderSummaryTotalRow(targetCarbsTotal, actualCarbsTotal);
+
+$('sOverview').innerHTML =
+  renderOverview(
+    swimHours,
+    bikeHours,
+    runHours,
+    allocSwim,
+    allocBike,
+    allocRun,
+    bikeBottleCarbs,
+    targetCarbsTotal,
+    actualCarbsTotal
+  );
+
 // Write totals into summary row
 
 var deltaLabel = carbDelta === 0
@@ -332,19 +405,6 @@ var deltaLabel = carbDelta === 0
   : (carbDelta > 0
       ? '+' + carbDelta + ' g'
       : carbDelta + ' g');
-
-$('sTotal').innerHTML =
-  '<div class="summary-total">' +
-    '<h3>Total</h3>' +
-    '<p>Target carbs: ' + targetCarbsTotal + ' g</p>' +
-    '<p>Actual carbs: ' + actualCarbsTotal + ' g</p>' +
-    '<p><strong>Difference: ' +
-      (carbDelta > 0 ? '+' : '') + carbDelta + ' g</strong></p>' +
-  '</div>';
-
-$('s5').innerHTML =
-  '<button class="ghost" id="btnCopySummary">Copy summary</button>';
-
 
 // Copy summary to clipboard
 document.getElementById('btnCopySummary').onclick = function () {
