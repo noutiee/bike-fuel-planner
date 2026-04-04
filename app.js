@@ -95,71 +95,117 @@ function calculateAndShowSummary() {
     var bikeBottleCarbs = Math.min(bikeTarget, numBottles * maxBottleCarbs);
     var bikeGelTarget   = Math.max(0, bikeTarget - bikeBottleCarbs);
 
-// ---- STEP 2: global gel target (no allocation yet) ----
-var totalGelTarget =
-  swimTarget +
-  bikeGelTarget +
-  runTarget;
 
-// ---- STEP 2: global allocation (single source of truth) ----
-var allocGlobal = totalGelTarget > 0
-  ? GelInventory.allocateFromInventory(totalGelTarget, {
-      preferLarge: preferLarge,
-      maxGelCarbs: runMaxGel,
-      expiryHorizonDays: expiryHorizon
-    })
-  : { picks: [], shortage: 0 };
+// ===============================
+// 🔁 GLOBAL PROGRESSIVE ALLOCATION
+// ===============================
 
-function takeGels(target, sharedPicks) {
-  var taken = [];
-  var sum = 0;
+// Discipline targets (gels only)
+var targets = {
+  swim: swimTarget,
+  run:  runTarget,
+  bike: bikeGelTarget
+};
 
-  while (sharedPicks.length && sum < target) {
-    taken.push(sharedPicks.shift());
-    sum += taken[taken.length - 1].carbs;
+// Remaining carbs needed
+var remaining = {
+  swim: swimTarget,
+  run:  runTarget,
+  bike: bikeGelTarget
+};
+
+var totalTarget = swimTarget + bikeGelTarget + runTarget;
+var currentTotal = 0;
+
+// Load inventory as INDIVIDUAL gel units
+var inventory = GelInventory.loadInventory();
+var gels = [];
+
+inventory.forEach(function (item) {
+  if (!item.quantity || !item.carbs) return;
+
+  var perGel = item.carbs / item.quantity;
+
+  for (var i = 0; i < item.quantity; i++) {
+ 
+gels.push({
+  name: item.name,
+  carbs: perGel,
+  used: 1
+});
   }
-  return taken;
-}
-
-
-// Re-sort for fair distribution: smallest gels first
-var remaining = allocGlobal.picks.slice().sort(function (a, b) {
-  return a.carbs - b.carbs;
 });
 
+// Result buckets
+var allocSwim = { picks: [] };
+var allocRun  = { picks: [] };
+var allocBike = { picks: [] };
 
-// ---- STEP 3: proportional split ----
-var totalTarget = swimTarget + bikeGelTarget + runTarget;
-
-
-// ---- STEP 3B: carb-based split (correct) ----
-function takeGelsByCarbs(target, sharedPicks) {
-  var taken = [];
-  var sum = 0;
-
-  while (sharedPicks.length && sum < target) {
-    var g = sharedPicks.shift();
-    taken.push(g);
-    sum += g.carbs;
-  }
-
-  return taken;
+// Helper: discipline preference multiplier
+function preferenceBoost(discipline, gel) {
+  if (discipline === 'bike' && gel.carbs >= 35) return 1.25;
+  if (discipline === 'run'  && gel.carbs >= 25 && gel.carbs <= 35) return 1.15;
+  return 1.0;
 }
 
-var remaining = allocGlobal.picks.slice();
+// Helper: benefit of assigning gel to discipline
+function disciplineBenefit(rem, gel) {
+  return Math.abs(rem) - Math.abs(rem - gel.carbs);
+}
 
-// Priority: Swim → Run → Bike
-var allocSwim = {
-  picks: takeGelsByCarbs(swimTarget, remaining)
-};
+// Helper: global stop rule
+function violatesGlobalRule(nextTotal) {
+  var overshoot = nextTotal - totalTarget;
+  var undershoot = totalTarget - nextTotal;
 
-var allocRun = {
-  picks: takeGelsByCarbs(runTarget, remaining)
-};
+  if (overshoot <= 0) return false; // still undershooting
+  if (undershoot <= 0) return false; // exact or perfect
+  return overshoot >= 2 * undershoot;
+}
 
-var allocBike = {
-  picks: takeGelsByCarbs(bikeGelTarget, remaining)
-};
+// Progressive allocation
+  
+var safety = 0;
+var MAX_ITERATIONS = 1000;
+
+
+while (gels.length && safety < MAX_ITERATIONS) {
+  safety++;
+  var best = null;
+
+  gels.forEach(function (gel, gi) {
+    ['swim', 'run', 'bike'].forEach(function (d) {
+      var benefit =
+        disciplineBenefit(remaining[d], gel) *
+        preferenceBoost(d, gel);
+
+      if (benefit <= 0) return;
+
+      var nextTotal = currentTotal + gel.carbs;
+      if (violatesGlobalRule(nextTotal)) return;
+
+      if (!best || benefit > best.benefit) {
+        best = {
+          index: gi,
+          gel: gel,
+          discipline: d,
+          benefit: benefit
+        };
+      }
+    });
+  });
+
+  if (!best) break;
+
+  // Apply best assignment
+  gels.splice(best.index, 1);
+  currentTotal += best.gel.carbs;
+  remaining[best.discipline] -= best.gel.carbs;
+
+  if (best.discipline === 'swim') allocSwim.picks.push(best.gel);
+  if (best.discipline === 'run')  allocRun.picks.push(best.gel);
+  if (best.discipline === 'bike') allocBike.picks.push(best.gel);
+}
   
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
