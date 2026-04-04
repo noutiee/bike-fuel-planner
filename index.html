@@ -121,7 +121,36 @@
 #s4 {
   font-size: 1rem;
 }
-    
+
+/* ===== Modal sizing & scroll fix (Step 1.5) ===== */
+
+#overlay {
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+/* Limit modal height to viewport */
+#card {
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Keep header visible */
+.modal-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Scroll modal content instead of page */
+#content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
   </style>
 </head>
 <body>
