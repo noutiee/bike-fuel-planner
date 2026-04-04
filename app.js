@@ -101,24 +101,14 @@ var totalGelTarget =
   bikeGelTarget +
   runTarget;
 
-    var allocSwim = swimTarget > 0
-      ? GelInventory.allocateFromInventory(swimTarget, {
-          sport: 'swim',
-          expiryHorizonDays: expiryHorizon
-        })
-      : { picks: [], shortage: 0 };
-
-    var allocBike = GelInventory.allocateFromInventory(bikeGelTarget, {
-      sport: 'bike',
+// ---- STEP 2: global allocation (single source of truth) ----
+var allocGlobal = totalGelTarget > 0
+  ? GelInventory.allocateFromInventory(totalGelTarget, {
       preferLarge: preferLarge,
-      expiryHorizonDays: expiryHorizon
-    });
-
-    var allocRun = GelInventory.allocateFromInventory(runTarget, {
-      sport: 'run',
       maxGelCarbs: runMaxGel,
       expiryHorizonDays: expiryHorizon
-    });
+    })
+  : { picks: [], shortage: 0 };
 
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
