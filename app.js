@@ -139,10 +139,14 @@ var remaining = gelUnits.filter(function (g) {
 if (remaining.length) {
   var smallest = remaining[remaining.length - 1];
  
+
 if (
-  allocatedGelCarbs < totalGelTarget &&
-  Math.abs(totalGelTarget - (allocatedGelCarbs + smallest.carbs)) <
-  Math.abs(totalGelTarget - allocatedGelCarbs)
+  allocatedGelCarbs === 0 ||
+  (
+    allocatedGelCarbs < totalGelTarget &&
+    Math.abs(totalGelTarget - (allocatedGelCarbs + smallest.carbs)) <
+    Math.abs(totalGelTarget - allocatedGelCarbs)
+  )
 ) {
     allocatedGels.push(smallest);
     allocatedGelCarbs += smallest.carbs;
