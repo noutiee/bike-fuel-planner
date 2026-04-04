@@ -333,13 +333,14 @@ var deltaLabel = carbDelta === 0
       ? '+' + carbDelta + ' g'
       : carbDelta + ' g');
 
-$('sTotal').innerHTML =$('sTotal carbs: ' + targetCarbsTotal + ' g</p>' +
+$('sTotal').innerHTML =
+  '<div class="summary-total">' +
+    '<h3>Total</h3>' +
+    '<p>Target carbs: ' + targetCarbsTotal + ' g</p>' +
     '<p>Actual carbs: ' + actualCarbsTotal + ' g</p>' +
     '<p><strong>Difference: ' +
       (carbDelta > 0 ? '+' : '') + carbDelta + ' g</strong></p>' +
   '</div>';
-  '<div class="summary-total">' +
-    '<h3>Total</h3>' +
 
 $('s5').innerHTML =
   '<button class="ghost" id="btnCopySummary">Copy summary</button>';
