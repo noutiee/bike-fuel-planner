@@ -121,10 +121,12 @@ function takeGels(target, sharedPicks) {
   return taken;
 }
 
-var remaining = allocGlobal.picks.slice();
 
+// Re-sort for fair distribution: smallest gels first
+var remaining = allocGlobal.picks.slice().sort(function (a, b) {
+  return a.carbs - b.carbs;
+});
 
-var remaining = allocGlobal.picks.slice();
 
 // ---- STEP 3: proportional split ----
 var totalTarget = swimTarget + bikeGelTarget + runTarget;
