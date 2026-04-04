@@ -86,7 +86,7 @@ function calculateAndShowSummary() {
     var totalInventory = GelInventory.loadInventory()
       .reduce(function (s, g) { return s + (g.quantity || 0); }, 0);
 
-    var expiryHorizon = (expiryInput > 0) ? expiryInput : totalInventory;
+   //  var expiryHorizon = (expiryInput > 0) ? expiryInput : totalInventory;
 
     var swimTarget = swimHours * swimCPH;
     var bikeTarget = bikeHours * bikeCPH;
@@ -95,24 +95,78 @@ function calculateAndShowSummary() {
     var bikeBottleCarbs = Math.min(bikeTarget, numBottles * maxBottleCarbs);
     var bikeGelTarget   = Math.max(0, bikeTarget - bikeBottleCarbs);
 
-    var allocSwim = swimTarget > 0
-      ? GelInventory.allocateFromInventory(swimTarget, {
-          sport: 'swim',
-          expiryHorizonDays: expiryHorizon
-        })
-      : { picks: [], shortage: 0 };
+// ---- GLOBAL gel target (shared inventory) ----
+var totalGelTarget =
+  swimTarget +
+  bikeGelTarget +
+  runTarget;
 
-    var allocBike = GelInventory.allocateFromInventory(bikeGelTarget, {
-      sport: 'bike',
-      preferLarge: preferLarge,
-      expiryHorizonDays: expiryHorizon
-    });
+// ---- Build global gel units from inventory ----
+var inventory = GelInventory.loadInventory();
+var gelUnits = [];
 
-    var allocRun = GelInventory.allocateFromInventory(runTarget, {
-      sport: 'run',
-      maxGelCarbs: runMaxGel,
-      expiryHorizonDays: expiryHorizon
+inventory.forEach(function (item) {
+  if (!item.carbs || !item.quantity) return;
+
+  for (var i = 0; i < item.quantity; i++) {
+    gelUnits.push({
+      name: item.name,
+      carbs: item.carbs
     });
+  }
+});
+  
+// ---- Global greedy gel allocation ----
+gelUnits.sort(function (a, b) {
+  return b.carbs - a.carbs;
+});
+
+var allocatedGels = [];
+var allocatedGelCarbs = 0;
+
+gelUnits.forEach(function (gel) {
+  if (allocatedGelCarbs + gel.carbs <= totalGelTarget) {
+    allocatedGels.push(gel);
+    allocatedGelCarbs += gel.carbs;
+  }
+});
+
+// ---- Optional: allow one gel overshoot if closer to target ----
+var remaining = gelUnits.filter(function (g) {
+  return allocatedGels.indexOf(g) === -1;
+});
+
+if (remaining.length) {
+  var smallest = remaining[remaining.length - 1];
+ 
+if (
+  allocatedGelCarbs < totalGelTarget &&
+  Math.abs(totalGelTarget - (allocatedGelCarbs + smallest.carbs)) <
+  Math.abs(totalGelTarget - allocatedGelCarbs)
+) {
+    allocatedGels.push(smallest);
+    allocatedGelCarbs += smallest.carbs;
+  }
+}
+
+function takeGels(target, shared) {
+  var picked = [];
+  var sum = 0;
+
+  while (shared.length && sum < target) {
+    picked.push(shared.shift());
+    sum += picked[picked.length - 1].carbs;
+  }
+  return picked;
+}
+
+// ---- Split allocated gels across disciplines ----
+var remainingGels = allocatedGels.slice();
+
+
+var bikeGels = takeGels(bikeGelTarget, remainingGels);
+var runGels  = takeGels(runTarget, remainingGels);
+var swimGels = takeGels(swimTarget, remainingGels);
 
     $('s1').textContent = 'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
     $('s2').textContent = 'Bike: ' + round(bikeHours, 2) + ' h → ' + round(bikeBottleCarbs, 0) + ' g bottles + ' + round(bikeGelTarget, 0) + ' g gels';
@@ -124,13 +178,8 @@ function calculateAndShowSummary() {
 var bottleCarbsTotal = Math.round(bikeBottleCarbs);
 
 // Total carbs from gels (from inventory allocation)
-var gelCarbsTotal = Math.round(
-  allocSwim.picks
-    .concat(allocBike.picks, allocRun.picks)
-    .reduce(function (sum, p) {
-      return sum + p.carbs;
-    }, 0)
-);
+  
+var gelCarbsTotal = Math.round(allocatedGelCarbs);
 
 // ---- Total target carbs ----
 var targetCarbsTotal = Math.round(
@@ -172,37 +221,35 @@ document.getElementById('btnCopySummary').onclick = function () {
   navigator.clipboard.writeText(text);
 };
 
+function listGels(title, gels) {
+  if (!gels.length) {
+    return '<h3>' + title + '</h3><p>None</p>';
+  }
 
-    function list(title, alloc) {
-      if (!alloc.picks.length) {
-        return '<h3>' + title + '</h3><p>None</p>';
-      }
+  var items = gels.map(function (g) {
+    return '<li>' + g.name + ' (' + g.carbs + ' g)</li>';
+  }).join('');
 
-      var items = alloc.picks.map(function (p) {
-        return '<li>' + p.used + ' × ' + p.name + ' (' + p.carbs + ' g)</li>';
-      }).join('');
+  return '<h3>' + title + '</h3><ul>' + items + '</ul>';
+}
 
-      return '<h3>' + title + '</h3><ul>' + items + '</ul>';
-    }
+$('sInv').innerHTML =
+  listGels('Swim gels', swimGels) +
+  listGels('Bike gels', bikeGels) +
+  listGels('Run gels',  runGels) +
+  '<button id="btnDeduct" class="ghost">Mark as packed</button>';
 
-    $('sInv').innerHTML =
-      list('Swim gels', allocSwim) +
-      list('Bike gels', allocBike) +
-      list('Run gels',  allocRun) +
-      '<button id="btnDeduct" class="ghost">Mark as packed</button>';
 
     var btnDeduct = $('btnDeduct');
     if (btnDeduct) {
       btnDeduct.onclick = function () {
-        var all = [].concat(allocSwim.picks, allocBike.picks, allocRun.picks);
+        var all = [].concat(swimGels, bikeGels, runGels);
         GelInventory.deductPlanFromInventory(all);
         GelInventory.renderTable();
         alert('Inventory updated');
       };
     }
   }
-
-  
 
 document.addEventListener('DOMContentLoaded', function () {
 
