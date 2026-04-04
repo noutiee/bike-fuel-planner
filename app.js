@@ -95,6 +95,12 @@ function calculateAndShowSummary() {
     var bikeBottleCarbs = Math.min(bikeTarget, numBottles * maxBottleCarbs);
     var bikeGelTarget   = Math.max(0, bikeTarget - bikeBottleCarbs);
 
+// ---- STEP 2: global gel target (no allocation yet) ----
+var totalGelTarget =
+  swimTarget +
+  bikeGelTarget +
+  runTarget;
+
     var allocSwim = swimTarget > 0
       ? GelInventory.allocateFromInventory(swimTarget, {
           sport: 'swim',
