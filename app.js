@@ -110,6 +110,17 @@ var allocGlobal = totalGelTarget > 0
     })
   : { picks: [], shortage: 0 };
 
+function takeGels(target, sharedPicks) {
+  var taken = [];
+  var sum = 0;
+
+  while (sharedPicks.length && sum < target) {
+    taken.push(sharedPicks.shift());
+    sum += taken[taken.length - 1].carbs;
+  }
+  return taken;
+}
+  
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
   return picks.reduce(function (s, p) {
