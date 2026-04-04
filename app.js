@@ -148,20 +148,18 @@ function takeGelsByCarbs(target, sharedPicks) {
 
 var remaining = allocGlobal.picks.slice();
 
-// Priority: Bike → Run → Swim
-var allocBike = {
-  picks: takeGelsByCarbs(bikeGelTarget, remaining)
+// Priority: Swim → Run → Bike
+var allocSwim = {
+  picks: takeGelsByCarbs(swimTarget, remaining)
 };
 
 var allocRun = {
   picks: takeGelsByCarbs(runTarget, remaining)
 };
 
-var allocSwim = {
-  picks: takeGelsByCarbs(swimTarget, remaining)
+var allocBike = {
+  picks: takeGelsByCarbs(bikeGelTarget, remaining)
 };
-
-
   
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
