@@ -122,7 +122,7 @@ var inventory = GelInventory.loadInventory();
 var gels = [];
 
 inventory.forEach(function (item) {
-  if (!item.quantity || !item.carbs) return;
+  if (!item.quantity || !item.carbsPerGel) return;
 
 
 var perGel = item.carbsPerGel;
