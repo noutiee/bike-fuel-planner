@@ -108,12 +108,16 @@ var gelUnits = [];
 inventory.forEach(function (item) {
   if (!item.carbs || !item.quantity) return;
 
-  for (var i = 0; i < item.quantity; i++) {
-    gelUnits.push({
-      name: item.name,
-      carbs: item.carbs
-    });
-  }
+ 
+var perGelCarbs = item.carbs / item.quantity;
+
+for (var i = 0; i < item.quantity; i++) {
+  gelUnits.push({
+    name: item.name,
+    carbs: perGelCarbs
+  });
+}
+
 });
   
 // ---- Global greedy gel allocation ----
