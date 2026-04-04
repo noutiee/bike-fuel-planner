@@ -129,19 +129,36 @@ var remaining = allocGlobal.picks.slice();
 // ---- STEP 3: proportional split ----
 var totalTarget = swimTarget + bikeGelTarget + runTarget;
 
-// Guard against division by zero
-function portion(target) {
-  return totalTarget > 0 ? target / totalTarget : 0;
+
+// ---- STEP 3B: carb-based split (correct) ----
+function takeGelsByCarbs(target, sharedPicks) {
+  var taken = [];
+  var sum = 0;
+
+  while (sharedPicks.length && sum < target) {
+    var g = sharedPicks.shift();
+    taken.push(g);
+    sum += g.carbs;
+  }
+
+  return taken;
 }
 
-var bikeShare = Math.round(remaining.length * portion(bikeGelTarget));
-var runShare  = Math.round(remaining.length * portion(runTarget));
-var swimShare = remaining.length - bikeShare - runShare;
+var remaining = allocGlobal.picks.slice();
 
-// Assign by count, not carbs (keeps logic simple)
-var allocBike = { picks: remaining.splice(0, bikeShare) };
-var allocRun  = { picks: remaining.splice(0, runShare) };
-var allocSwim = { picks: remaining.splice(0, swimShare) };
+// Priority: Bike → Run → Swim
+var allocBike = {
+  picks: takeGelsByCarbs(bikeGelTarget, remaining)
+};
+
+var allocRun = {
+  picks: takeGelsByCarbs(runTarget, remaining)
+};
+
+var allocSwim = {
+  picks: takeGelsByCarbs(swimTarget, remaining)
+};
+
 
   
 // ---- DEBUG: allocation observability (Step 1) ----
