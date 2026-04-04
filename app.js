@@ -120,6 +120,21 @@ function takeGels(target, sharedPicks) {
   }
   return taken;
 }
+
+var remaining = allocGlobal.picks.slice();
+
+// Priority order: Bike → Run → Swim
+var allocBike = {
+  picks: takeGels(bikeGelTarget, remaining)
+};
+
+var allocRun = {
+  picks: takeGels(runTarget, remaining)
+};
+
+var allocSwim = {
+  picks: takeGels(swimTarget, remaining)
+};
   
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
