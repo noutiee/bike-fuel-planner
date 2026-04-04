@@ -114,6 +114,25 @@ function calculateAndShowSummary() {
       expiryHorizonDays: expiryHorizon
     });
 
+// ---- DEBUG: allocation observability (Step 1) ----
+function sumCarbs(picks) {
+  return picks.reduce(function (s, p) {
+    return s + p.carbs;
+  }, 0);
+}
+
+console.log('--- Allocation debug ---');
+console.log('Swim target:', swimTarget, 'allocated carbs:', sumCarbs(allocSwim.picks));
+console.log('Bike target:', bikeGelTarget, 'allocated carbs:', sumCarbs(allocBike.picks));
+console.log('Run target:', runTarget, 'allocated carbs:', sumCarbs(allocRun.picks));
+console.log(
+  'TOTAL allocated gel carbs:',
+  sumCarbs(
+    [].concat(allocSwim.picks, allocBike.picks, allocRun.picks)
+  )
+);
+console.log('------------------------');
+  
     $('s1').textContent = 'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
     $('s2').textContent = 'Bike: ' + round(bikeHours, 2) + ' h → ' + round(bikeBottleCarbs, 0) + ' g bottles + ' + round(bikeGelTarget, 0) + ' g gels';
     $('s3').textContent = 'Run: '  + round(runHours, 2) + ' h → ' + round(runTarget, 0) + ' g';
