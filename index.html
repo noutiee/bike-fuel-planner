@@ -151,6 +151,47 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ===== Fuel summary grid (table-like, no borders) ===== */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns:
+    1.2fr   /* Discipline */
+    1fr     /* Duration */
+    1fr     /* Target */
+    1.8fr   /* Gels */
+    1fr     /* Bottles */
+    1fr;    /* Total */
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.summary-grid.header {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.summary-grid.row {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.summary-grid.total {
+  border-top: 2px solid #c7d7ff;
+  margin-top: 8px;
+  padding-top: 8px;
+  font-weight: 700;
+}
+
+.summary-cell.center {
+  text-align: center;
+}
+
   </style>
 </head>
 <body>
