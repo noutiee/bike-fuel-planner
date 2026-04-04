@@ -132,13 +132,30 @@ var gelCarbsTotal = Math.round(
     }, 0)
 );
 
+// ---- Total target carbs ----
+var targetCarbsTotal = Math.round(
+  swimTarget + bikeTarget + runTarget
+);
+
+// ---- Total actual carbs (packed) ----
+var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
+
+// Difference (positive = surplus, negative = shortage)
+var carbDelta = actualCarbsTotal - targetCarbsTotal;
+
 // Write totals into summary row
+
+var deltaLabel = carbDelta === 0
+  ? 'exact match'
+  : (carbDelta > 0
+      ? '+' + carbDelta + ' g'
+      : carbDelta + ' g');
+
 $('s4').textContent =
-  'Total carbs: ' +
-  bottleCarbsTotal + ' g from bottles + ' +
-  gelCarbsTotal + ' g from gels';
-
-
+  'Target vs actual: ' +
+  targetCarbsTotal + ' g target → ' +
+  actualCarbsTotal + ' g packed (' +
+  deltaLabel + ')';
 
 $('s5').innerHTML =
   '<button class="ghost" id="btnCopySummary">Copy summary</button>';
