@@ -123,18 +123,26 @@ function takeGels(target, sharedPicks) {
 
 var remaining = allocGlobal.picks.slice();
 
-// Priority order: Bike → Run → Swim
-var allocBike = {
-  picks: takeGels(bikeGelTarget, remaining)
-};
 
-var allocRun = {
-  picks: takeGels(runTarget, remaining)
-};
+var remaining = allocGlobal.picks.slice();
 
-var allocSwim = {
-  picks: takeGels(swimTarget, remaining)
-};
+// ---- STEP 3: proportional split ----
+var totalTarget = swimTarget + bikeGelTarget + runTarget;
+
+// Guard against division by zero
+function portion(target) {
+  return totalTarget > 0 ? target / totalTarget : 0;
+}
+
+var bikeShare = Math.round(remaining.length * portion(bikeGelTarget));
+var runShare  = Math.round(remaining.length * portion(runTarget));
+var swimShare = remaining.length - bikeShare - runShare;
+
+// Assign by count, not carbs (keeps logic simple)
+var allocBike = { picks: remaining.splice(0, bikeShare) };
+var allocRun  = { picks: remaining.splice(0, runShare) };
+var allocSwim = { picks: remaining.splice(0, swimShare) };
+
   
 // ---- DEBUG: allocation observability (Step 1) ----
 function sumCarbs(picks) {
