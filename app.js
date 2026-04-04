@@ -53,6 +53,36 @@
     return Math.round(x * p) / p;
   }
 
+function gelSummary(picks) {
+  var count = picks.length;
+  var carbs = picks.reduce(function (s, p) { return s + p.carbs; }, 0);
+  var perGel = count ? Math.round(carbs / count) : 0;
+  return {
+    count: count,
+    perGel: perGel,
+    carbs: Math.round(carbs)
+  };
+}
+
+function renderDisciplineSummary(title, hours, target, gelPicks, bottleCarbs) {
+  var gels = gelSummary(gelPicks);
+  var gelText = gels.count
+    ? gels.count + ' × ' + gels.perGel + ' g = ' + gels.carbs + ' g'
+    : '0 g';
+
+  var total = gels.carbs + bottleCarbs;
+
+  return (
+    '<div class="summary-block">' +
+      '<h3>' + title + '</h3>' +
+      '<p>Duration: ' + round(hours, 2) + ' h</p>' +
+      '<p>Target carbs: ' + Math.round(target) + ' g</p>' +
+      '<p>Gels: ' + gelText + '</p>' +
+      '<p>Bottles: ' + bottleCarbs + ' g</p>' +
+      '<p><strong>Total carbs: ' + total + ' g</strong></p>' +
+    '</div>'
+  );
+}
   /* -----------------------------
      MAIN CALCULATION
   ------------------------------ */
@@ -138,8 +168,6 @@ for (var i = 0; i < item.quantity; i++) {
   });
 }
 });
-  
-
 
 // Result buckets
 var allocSwim = { picks: [] };
@@ -248,11 +276,30 @@ console.log(
   )
 );
 console.log('------------------------');
-  
-    $('s1').textContent = 'Swim: ' + round(swimHours, 2) + ' h → ' + round(swimTarget, 0) + ' g';
-    $('s2').textContent = 'Bike: ' + round(bikeHours, 2) + ' h → ' + round(bikeBottleCarbs, 0) + ' g bottles + ' + round(bikeGelTarget, 0) + ' g gels';
-    $('s3').textContent = 'Run: '  + round(runHours, 2) + ' h → ' + round(runTarget, 0) + ' g';
-  
+
+$('sSummary').innerHTML =
+  renderDisciplineSummary(
+    'Swim',
+    swimHours,
+    swimTarget,
+    allocSwim.picks,
+    0
+  ) +
+  renderDisciplineSummary(
+    'Bike',
+    bikeHours,
+    bikeTarget,
+    allocBike.picks,
+    bikeBottleCarbs
+  ) +
+  renderDisciplineSummary(
+    'Run',
+    runHours,
+    runTarget,
+    allocRun.picks,
+    0
+  );
+
 // ---- Totals summary ----
 
 // Total carbs from bottles (already known)
@@ -286,11 +333,13 @@ var deltaLabel = carbDelta === 0
       ? '+' + carbDelta + ' g'
       : carbDelta + ' g');
 
-$('s4').textContent =
-  'Target vs actual: ' +
-  targetCarbsTotal + ' g target → ' +
-  actualCarbsTotal + ' g packed (' +
-  deltaLabel + ')';
+$('sTotal').innerHTML =$('sTotal carbs: ' + targetCarbsTotal + ' g</p>' +
+    '<p>Actual carbs: ' + actualCarbsTotal + ' g</p>' +
+    '<p><strong>Difference: ' +
+      (carbDelta > 0 ? '+' : '') + carbDelta + ' g</strong></p>' +
+  '</div>';
+  '<div class="summary-total">' +
+    '<h3>Total</h3>' +
 
 $('s5').innerHTML =
   '<button class="ghost" id="btnCopySummary">Copy summary</button>';
