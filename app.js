@@ -137,6 +137,9 @@ for (var i = 0; i < item.quantity; i++) {
     used: 1
   });
 }
+});
+  
+
 
 // Result buckets
 var allocSwim = { picks: [] };
