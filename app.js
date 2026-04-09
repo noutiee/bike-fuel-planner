@@ -82,10 +82,40 @@ function renderSummaryHeader() {
 function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
   if (!hours || hours <= 0) return '';
 
-  var gels = gelSummary(gelPicks);
-  var gelText = gels.count
-    ? gels.count + ' × ' + gels.perGel + ' g = ' + gels.carbs + ' g'
-    : '–';
+  var gels = gelPicks || [];
+
+  var gelText = '–';
+  var totalGelCarbs = 0;
+
+  if (gels.length > 0) {
+    var sizes = gels.map(function (g) { return g.carbs; });
+    totalGelCarbs = sizes.reduce(function (s, c) { return s + c; }, 0);
+
+    var first = sizes[0];
+    var uniform = sizes.every(function (c) { return c === first; });
+
+    if (uniform) {
+      gelText = sizes.length + ' × ' + first + ' g = ' + totalGelCarbs + ' g';
+    } else {
+      gelText = sizes.join(' + ') + ' = ' + totalGelCarbs + ' g';
+    }
+  }
+
+  var total = totalGelCarbs + bottleCarbs;
+
+  return (
+    '<div class="summary-grid row">' +
+      '<div><strong>' + label + '</strong></div>' +
+      '<div class="summary-cell center">' + round(hours, 2) + ' h</div>' +
+      '<div class="summary-cell center">' + Math.round(target) + ' g</div>' +
+      '<div>' + gelText + '</div>' +
+      '<div class="summary-cell center">' +
+        (bottleCarbs ? bottleCarbs + ' g' : '–') +
+      '</div>' +
+      '<div class="summary-cell center">' + total + ' g</div>' +
+    '</div>'
+  );
+}
 
   var total = gels.carbs + bottleCarbs;
 
