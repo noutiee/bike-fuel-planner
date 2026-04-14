@@ -13,235 +13,320 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <style>
-    :root {
-      --brand:#0b57d0;
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --ink:#0d1321;
-      --muted:#64748b;
-    }
 
-    * { box-sizing:border-box }
+    
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.25);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
 
-    body {
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      margin:0;
-      background:var(--bg);
-      color:var(--ink);
-    }
+#overlay.show {
+  display: flex;
+}
 
-    header {
-      padding:14px 16px;
-      background:var(--brand);
-      color:#fff;
-      position:sticky;
-      top:0;
-    }
+    :root{--brand:#0b57d0;--bg:#f6f7fb;--card:#ffffff;--ink:#0d1321;--muted:#64748b}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+    header{padding:14px 16px;background:var(--brand);color:#fff;position:sticky;top:0}
+    h1{font-size:1.125rem;margin:0}
+    main{max-width:980px;margin:16px auto;padding:0 12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+    fieldset{border:1px solid #e5e7eb;border-radius:10px;background:var(--card);padding:12px}
+    legend{padding:0 6px;color:var(--muted)}
+    label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0}
+    label span{font-size:0.95rem}
+    input[type=number]{width:100px;text-align:right;padding:8px;border:1px solid #c7d0e0;border-radius:8px}
+    input[type=range]{flex:1}
+    .inline{display:flex;gap:8px;align-items:center}
+    button.primary{display:block;width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:600;margin:16px 0;font-size:1.05rem}
+    .ghost{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:10px 12px}
+    details{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;background:#fff}
 
-    h1 { margin:0; font-size:1.125rem }
+#card {
+  background: #ffffff;
+  color: #0d1321;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+  max-width: 680px;
+  width: 100%;
+}
 
-    main {
-      max-width:980px;
-      margin:16px auto;
-      padding:0 12px;
-    }
+/* Improve modal content readability */
+#content {
+  padding: 14px;
+}
 
-    .grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
+.row {
+  background: #f6f7fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
 
-    @media (max-width:720px) {
-      .grid { grid-template-columns:1fr }
-    }
+    
+/* ===== Modal header (overlay only) ===== */
+.modal-header {
+  position: relative;
+  background: var(--brand);
+  color: #ffffff;
+  padding: 12px 16px;
+}
 
-    fieldset {
-      border:1px solid #e5e7eb;
-      border-radius:10px;
-      background:var(--card);
-      padding:12px;
-    }
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
 
-    legend {
-      padding:0 6px;
-      color:var(--muted);
-    }
+/* Close button – top right, subtle */
+#close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+}
 
-    label {
-      display:flex;
-      justify-content:space-between;
-      gap:8px;
-      align-items:center;
-      margin:8px 0;
-    }
+#close:hover {
+  background: rgba(255,255,255,0.3);
+}
 
-    input[type=number] {
-      width:100px;
-      text-align:right;
-      padding:8px;
-      border:1px solid #c7d0e0;
-      border-radius:8px;
-    }
+#close:active {
+  transform: scale(0.95);
+}
 
-    input[type=range] { flex:1 }
 
-    .inline {
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
+/* Emphasise main result rows */
+#s1, #s2, #s3, #s4 {
+  font-weight: 600;
+  background: #eef4ff;
+  border-color: #c7d7ff;
+}
 
-    button.primary {
-      width:100%;
-      background:var(--brand);
-      color:#fff;
-      border:0;
-      border-radius:12px;
-      padding:14px 18px;
-      font-weight:600;
-      margin:16px 0;
-      font-size:1.05rem;
-    }
+#s4 {
+  font-size: 1rem;
+}
 
-    .ghost {
-      background:#1f2937;
-      color:#e5e7eb;
-      border:1px solid #374151;
-      border-radius:10px;
-      padding:8px 10px;
-      cursor:pointer;
-    }
+/* ===== Modal sizing & scroll fix (Step 1.5) ===== */
 
-    /* ===== Overlay ===== */
-    #overlay {
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.25);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-      padding:12px;
-    }
+#overlay {
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
 
-    #overlay.show { display:flex }
+/* Limit modal height to viewport */
+#card {
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
+}
 
-    #card {
-      background:#fff;
-      border-radius:14px;
-      box-shadow:0 24px 70px rgba(0,0,0,0.45);
-      max-width:700px;
-      width:100%;
-      max-height:calc(100vh - 24px);
-      display:flex;
-      flex-direction:column;
-    }
+/* Keep header visible */
+.modal-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 
-    .modal-header {
-      background:var(--brand);
-      color:#fff;
-      padding:12px 16px;
-      position:sticky;
-      top:0;
-      z-index:1;
-    }
+/* Scroll modal content instead of page */
+#content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-    #close {
-      position:absolute;
-      top:8px;
-      right:8px;
-      width:32px;
-      height:32px;
-      border-radius:50%;
-      border:none;
-      background:rgba(255,255,255,0.2);
-      color:white;
-      font-size:20px;
-      cursor:pointer;
-    }
+/* ===== Fuel summary grid (table-like, no borders) ===== */
 
-    #content { padding:14px; overflow-y:auto }
 
-    .row {
-      background:#f6f7fb;
-      border:1px solid #e5e7eb;
-      border-radius:10px;
-      padding:10px;
-      margin-bottom:10px;
-    }
+.summary-grid {
+  display: grid;
+  grid-template-columns:
+    1.2fr   /* Discipline */
+    1fr     /* Duration */
+    1fr     /* Target */
+    1.8fr   /* Gels */
+    1fr     /* Bottles */
+    1fr     /* Total */
+    0.6fr;  /* Edit */
+  gap: 6px 12px;
+  align-items: center;
+}
 
-    /* ===== SUMMARY GRID ===== */
-    .summary-grid {
-      display:grid;
-      grid-template-columns:
-        1.2fr   /* Discipline */
-        1fr     /* Duration */
-        1fr     /* Target */
-        1.8fr   /* Gels */
-        1fr     /* Bottles */
-        1fr     /* Total */
-        0.6fr;  /* Edit */
-      gap:6px 12px;
-      align-items:center;
-    }
+.summary-grid.header {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
 
-    .summary-grid.header {
-      font-weight:600;
-      color:#475569;
-      font-size:0.85rem;
-      border-bottom:1px solid #e5e7eb;
-      padding-bottom:6px;
-      margin-bottom:6px;
-    }
+.summary-grid.row {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
 
-    .summary-grid.row {
-      background:#f8fafc;
-      border-radius:8px;
-      padding:8px 10px;
-    }
+.summary-grid.total {
+  border-top: 2px solid #c7d7ff;
+  margin-top: 8px;
+  padding-top: 8px;
+  font-weight: 700;
+}
 
-    .summary-grid.total {
-      border-top:2px solid #c7d7ff;
-      margin-top:8px;
-      padding-top:8px;
-      font-weight:700;
-    }
+.summary-cell.center {
+  text-align: center;
+}
 
-    .summary-cell.center { text-align:center }
-
-    .edit-btn {
-      font-size:14px;
-      padding:6px 8px;
-    }
   </style>
 </head>
-
 <body>
 <header><h1>Bike Fuel Planner</h1></header>
 
-<main>
-  <!-- Inputs unchanged -->
-</main>
+<div style="margin:12px; display:flex; gap:8px; align-items:center;">
+  <button class="ghost" id="btnSignIn" onclick="signIn()">Sign in with Google</button>
+  <button class="ghost" id="btnSignOut" onclick="signOut()" style="display:none;">Sign out</button>
+  <span id="signedInAs" style="color:#64748b;"></span>
+  <button class="ghost" id="btnForcePull" type="button" style="margin-left:auto; display:none;">Force sync (pull)</button>
+</div>
 
-<div id="overlay" role="dialog" aria-modal="true">
-  <div id="card">
-    <div class="modal-header">
-      <h2>Fuel Plan Summary</h2>
-      <button id="close">×</button>
+<main>
+  <div class="grid">
+    <fieldset>
+      <legend>Swim</legend>
+      <label><span>Duration (min)</span><div class="inline"><input id="swimMinutes" type="number" min="0" step="5" value="0"><input id="swimSlider" type="range" min="0" max="60" step="5" value="0"></div></label>
+      <label><span>Carbs per hour</span><div class="inline"><button data-step="-5" data-target="swimCPH">-</button><input id="swimCPH" type="number" value="80"><button data-step="5" data-target="swimCPH">+</button></div></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Bike</legend>
+      <label><span>Duration (min)</span><div class="inline"><input id="bikeMinutes" type="number" min="0" step="5" value="0"><input id="bikeSlider" type="range" min="0" max="300" step="5" value="0"></div></label>
+      <label><span>Carbs per hour</span><div class="inline"><button data-step="-5" data-target="bikeCPH">-</button><input id="bikeCPH" type="number" value="80"><button data-step="5" data-target="bikeCPH">+</button></div></label>
+      <label><span># Carb bottles</span><input id="numCarbBottles" type="number" value="1"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Run</legend>
+      <label><span>Duration (min)</span><div class="inline"><input id="runMinutes" type="number" min="0" step="5" value="0"><input id="runSlider" type="range" min="0" max="120" step="5" value="0"></div></label>
+      <label><span>Carbs per hour</span><div class="inline"><button data-step="-5" data-target="runCPH">-</button><input id="runCPH" type="number" value="80"><button data-step="5" data-target="runCPH">+</button></div></label>
+    </fieldset>
+  </div>
+
+  <details>
+    <summary><strong>Advanced settings</strong></summary>
+    <label><span>Max carbs per bottle (g)</span><input id="maxBottleCarbs" type="number" value="120"></label>
+    <label><span>Mix ratio G</span><input id="G" type="number" step="0.1" value="1"></label>
+    <label><span>Mix ratio F</span><input id="F" type="number" step="0.1" value="0.8"></label>
+    <label><span>Sodium target (mg/h)</span><input id="targetSodiumPerHour" type="number" value="700"></label>
+    <label><span>Sodium per scoop</span><input id="sodiumPerScoop" type="number" value="5000"></label>
+    <label><span>Run max gel size (g)</span><input id="runMaxGel" type="number" value="30"></label>
+    <label><span>Prefer larger gels</span><input id="bikePreferLarge" type="checkbox" checked></label>
+    <label><span>Expiry horizon (days)</span><input id="expiryHorizonDays" type="number"></label>
+  </details>
+
+  <button class="primary" id="btnCalc">Calculate</button>
+
+  
+<section id="inventory-section" style="margin-top:16px">
+  <fieldset>
+    <legend>Gel Inventory</legend>
+
+    <form id="inventory-form">
+      <label>
+        <span>Gel name</span>
+        <input id="gel-name" placeholder="e.g., Maurten Gel 100" required>
+      </label>
+      <label>
+        <span>Carbs per gel (g)</span>
+        <input id="gel-carbs" type="number" min="1" step="1" required>
+      </label>
+      <label>
+        <span>Caffeine (mg, optional)</span>
+        <input id="gel-caff" type="number" min="0" step="1">
+      </label>
+      <label>
+        <span>Expiry date (DD/MM/YY)</span>
+        <input id="gel-expiry" placeholder="DD/MM/YY" required>
+      </label>
+      <label>
+        <span>Quantity</span>
+        <input id="gel-qty" type="number" min="1" step="1" required>
+      </label>
+      <button class="primary" type="submit">Add to inventory</button>
+    </form>
+
+    <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
+      <button class="ghost" id="btn-export" type="button">Export JSON</button>
+      <label class="ghost" style="cursor:pointer">
+        Import JSON
+        <input id="file-import" type="file" accept="application/json" hidden>
+      </label>
+      <label style="margin-left:auto">
+        <input id="toggle-hide-expired" type="checkbox"> Hide expired
+      </label>
     </div>
 
+    <table id="inventory-table">
+      <thead>
+        <tr>
+          <th>Gel</th>
+          <th>Carbs (g)</th>
+          <th>Caff (mg)</th>
+          <th>Expiry</th>
+          <th>Qty</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="inventory-tbody"></tbody>
+    </table>
+  </fieldset>
+</section>
+
+  
+  <!-- Inventory section unchanged -->
+</main>
+
+   <div id="overlay" role="dialog" aria-modal="true">
+  <div id="card">
+   
+
+<div class="modal-header">
+  <h2>Fuel Plan Summary</h2>
+  <button id="close" aria-label="Close" title="Close">×</button>
+</div>
+
     <div id="content">
-      <div class="row" id="sSummary"></div>
-      <div class="row" id="sSummaryTotal"></div>
-      <div class="row" id="sOverview"></div>
-      <div class="row" id="sInv"></div>
+     
+
+<div class="row" id="sSummary"></div>
+<div class="row" id="sSummaryTotal"></div>
+<div class="row" id="sOverview"></div>
+<div class="row" id="sInv"></div>
+
     </div>
   </div>
 </div>
 
+<!-- App scripts (order matters) -->
 <script src="sync.js"></script>
 <script src="inventory.js"></script>
 <script src="app.js"></script>
+  
 </body>
 </html>
