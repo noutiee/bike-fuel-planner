@@ -126,14 +126,52 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
       '</div>' +
     '</div>';
 
-  if (activeEditDiscipline === label) {
-    rowHtml +=
-      '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
-        '<em>Editing ' + label + ' allocation…</em>' +
-      '</div>';
-  }
+if (activeEditDiscipline === label) {
+  rowHtml +=
+    '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
+      renderAllocationEditor(label, draftPicks) +
+    '</div>';
+}
 
   return rowHtml;
+}
+
+function renderAllocationEditor(label, allocPicks) {
+  var inventory = GelInventory.loadInventory();
+
+  // Count allocated picks for this discipline by gel id
+  var allocated = {};
+  allocPicks.forEach(function (p) {
+    allocated[p.id] = (allocated[p.id] || 0) + 1;
+  });
+
+  var rows = inventory.map(function (g) {
+    var allocQty = allocated[g.id] || 0;
+
+    return (
+      '<div class="editor-row" style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:8px; align-items:center;">' +
+        '<div>' + g.name + ' (' + g.carbsPerGel + ' g)</div>' +
+        '<div class="summary-cell center">' + g.quantity + '</div>' +
+        '<div class="summary-cell center">' +
+          '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
+          allocQty +
+          ' <button class="ghost editor-plus" data-id="' + g.id + '">+</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  return (
+    '<div class="allocation-editor" style="padding:10px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px;">' +
+      '<h4>Edit ' + label + ' allocation</h4>' +
+      '<div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">Inventory / Allocated</div>' +
+      rows +
+      '<div style="display:flex; gap:8px; margin-top:12px;">' +
+        '<button class="ghost editor-cancel">Cancel</button>' +
+        '<button class="ghost editor-save">Save</button>' +
+      '</div>' +
+    '</div>'
+  );
 }
   
   /* -----------------------------
@@ -380,8 +418,19 @@ $('sOverview').innerHTML =
 // ---- Wire edit buttons ----
 document.querySelectorAll('.edit-btn').forEach(function (btn) {
   btn.onclick = function () {
-    activeEditDiscipline = this.dataset.discipline;
-    draftPicks = null; // will be initialized later
+  
+activeEditDiscipline = this.dataset.discipline;
+
+var alloc =
+  activeEditDiscipline === 'Swim' ? allocSwim :
+  activeEditDiscipline === 'Bike' ? allocBike :
+  allocRun;
+
+// clone current picks into a draft
+draftPicks = alloc.picks.map(function (p) {
+  return Object.assign({}, p);
+});
+
     calculateAndShowSummary(); // re-render with editor visible
   };
 });
