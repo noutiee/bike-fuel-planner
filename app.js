@@ -188,6 +188,65 @@ function renderAllocationEditor(label, allocPicks) {
   );
 }
   
+function renderOverview(
+  swimH,
+  bikeH,
+  runH,
+  allocSwim,
+  allocBike,
+  allocRun,
+  bottleCarbs,
+  targetTotal,
+  actualTotal
+) {
+  var totalHours = round(swimH + bikeH + runH, 2);
+
+  var allGels = []
+    .concat(allocSwim.picks, allocBike.picks, allocRun.picks);
+
+  var byName = {};
+  allGels.forEach(function (g) {
+    if (!byName[g.name]) {
+      byName[g.name] = { count: 0, carbs: 0 };
+    }
+    byName[g.name].count += 1;
+    byName[g.name].carbs += g.carbs;
+  });
+
+  var gelList = Object.keys(byName).map(function (name) {
+    var g = byName[name];
+    return (
+      '<li>' + name + ': ' +
+      g.count + ' gel' + (g.count > 1 ? 's' : '') +
+      ' (' + Math.round(g.carbs) + ' g)</li>'
+    );
+  }).join('');
+
+  var html =
+    '<div class="summary-overview">' +
+      '<h3>Plan overview</h3>' +
+      '<p><strong>Total duration:</strong> ' + totalHours + ' h</p>' +
+      (gelList
+        ? '<p><strong>Total gels:</strong></p><ul>' + gelList + '</ul>'
+        : ''
+      );
+
+  if (bottleCarbs > 0) {
+    html +=
+      '<p><strong>Total bottles:</strong> ' + bottleCarbs + ' g</p>';
+  }
+
+  html +=
+      '<p><strong>Target:</strong> ' + targetTotal + ' g</p>' +
+      '<p><strong>Actual:</strong> ' + actualTotal + ' g</p>' +
+      '<p><strong>Difference:</strong> ' +
+        (actualTotal - targetTotal > 0 ? '+' : '') +
+        (actualTotal - targetTotal) + ' g</p>' +
+    '</div>';
+
+  return html;
+}
+
   /* -----------------------------
      MAIN CALCULATION
   ------------------------------ */
