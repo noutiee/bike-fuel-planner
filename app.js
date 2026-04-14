@@ -136,6 +136,20 @@ if (activeEditDiscipline === label) {
   return rowHtml;
 }
 
+function renderSummaryTotalRow(target, actual) {
+  return (
+    '<div class="summary-grid total">' +
+      '<div><strong>Total</strong></div>' +
+      '<div></div>' +
+      '<div class="summary-cell center">' + target + ' g</div>' +
+      '<div></div>' +
+      '<div></div>' +
+      '<div class="summary-cell center">' + actual + ' g</div>' +
+      '<div></div>' +
+    '</div>'
+  );
+}
+
 function renderAllocationEditor(label, allocPicks) {
   var inventory = GelInventory.loadInventory();
 
