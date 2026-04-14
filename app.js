@@ -84,6 +84,7 @@ function renderSummaryHeader() {
 }
 
 
+
 function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
   if (!hours || hours <= 0) return '';
 
@@ -107,7 +108,7 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
 
   var total = totalGelCarbs + bottleCarbs;
 
-  return (
+  var rowHtml =
     '<div class="summary-grid row">' +
       '<div><strong>' + label + '</strong></div>' +
       '<div class="summary-cell center">' + round(hours, 2) + ' h</div>' +
@@ -123,65 +124,18 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
           : ''
         ) +
       '</div>' +
-    '</div>'
-  );
-}
-
-  
-function renderSummaryTotalRow(target, actual) {
-  return (
-    '<div class="summary-grid total">' +
-      '<div><strong>Total</strong></div>' +
-      '<div></div>' +
-      '<div class="summary-cell center">' + target + ' g</div>' +
-      '<div></div>' +
-      '<div></div>' +
-      '<div class="summary-cell center">' + actual + ' g</div>' +
-    '</div>'
-  );
-}
-
-function renderOverview(swimH, bikeH, runH, allocSwim, allocBike, allocRun, bottleCarbs, targetTotal, actualTotal) {
-  var totalHours = round(swimH + bikeH + runH, 2);
-
-  var allGels = allocSwim.picks
-    .concat(allocBike.picks, allocRun.picks);
-
-  var byName = {};
-  allGels.forEach(function (g) {
-    if (!byName[g.name]) byName[g.name] = { count: 0, carbs: 0 };
-    byName[g.name].count += 1;
-    byName[g.name].carbs += g.carbs;
-  });
-
-  var gelList = Object.keys(byName).map(function (name) {
-    var g = byName[name];
-    return '<li>' + name + ': ' + g.count + ' gel' +
-      (g.count > 1 ? 's' : '') +
-      ' (' + Math.round(g.carbs) + ' g)</li>';
-  }).join('');
-
-  var html =
-    '<div class="summary-overview">' +
-      '<h3>Plan overview</h3>' +
-      '<p><strong>Total duration:</strong> ' + totalHours + ' h</p>' +
-      (gelList ? '<p><strong>Total gels:</strong></p><ul>' + gelList + '</ul>' : '');
-
-  if (bottleCarbs > 0) {
-    html += '<p><strong>Total bottles:</strong> ' + bottleCarbs + ' g</p>';
-  }
-
-  html +=
-      '<p><strong>Target:</strong> ' + targetTotal + ' g</p>' +
-      '<p><strong>Actual:</strong> ' + actualTotal + ' g</p>' +
-      '<p><strong>Difference:</strong> ' +
-        (actualTotal - targetTotal > 0 ? '+' : '') +
-        (actualTotal - targetTotal) + ' g</p>' +
     '</div>';
 
-  return html;
-}
+  if (activeEditDiscipline === label) {
+    rowHtml +=
+      '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
+        '<em>Editing ' + label + ' allocation…</em>' +
+      '</div>';
+  }
 
+  return rowHtml;
+}
+  
   /* -----------------------------
      MAIN CALCULATION
   ------------------------------ */
@@ -422,6 +376,15 @@ $('sOverview').innerHTML =
     targetCarbsTotal,
     actualCarbsTotal
   );
+
+// ---- Wire edit buttons ----
+document.querySelectorAll('.edit-btn').forEach(function (btn) {
+  btn.onclick = function () {
+    activeEditDiscipline = this.dataset.discipline;
+    draftPicks = null; // will be initialized later
+    calculateAndShowSummary(); // re-render with editor visible
+  };
+});
 
 // Write totals into summary row
 
