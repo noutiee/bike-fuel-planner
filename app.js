@@ -64,6 +64,10 @@ function gelSummary(picks) {
   };
 }
 
+// ---- Manual override state ----
+var activeEditDiscipline = null; // 'Swim' | 'Bike' | 'Run' | null
+var draftPicks = null;           // temporary editable picks for that discipline
+  
 // ---------- Summary grid renderers ----------
 
 function renderSummaryHeader() {
