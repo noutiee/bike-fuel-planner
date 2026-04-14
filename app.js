@@ -83,11 +83,11 @@ function renderSummaryHeader() {
   );
 }
 
+
 function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
   if (!hours || hours <= 0) return '';
 
   var gels = gelPicks || [];
-
   var gelText = '–';
   var totalGelCarbs = 0;
 
@@ -107,27 +107,27 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
 
   var total = totalGelCarbs + bottleCarbs;
 
+  return (
+    '<div class="summary-grid row">' +
+      '<div><strong>' + label + '</strong></div>' +
+      '<div class="summary-cell center">' + round(hours, 2) + ' h</div>' +
+      '<div class="summary-cell center">' + Math.round(target) + ' g</div>' +
+      '<div>' + gelText + '</div>' +
+      '<div class="summary-cell center">' +
+        (bottleCarbs ? bottleCarbs + ' g' : '–') +
+      '</div>' +
+      '<div class="summary-cell center">' + total + ' g</div>' +
+      '<div class="summary-cell center">' +
+        (hours > 0
+          ? '<button class="ghost edit-btn" data-discipline="' + label + '" title="Edit allocation">✏</button>'
+          : ''
+        ) +
+      '</div>' +
+    '</div>'
+  );
+}
 
-return (
-  '<div class="summary-grid row">' +
-    '<div><strong>' + label + '</strong></div>' +
-    '<div class="summary-cell center">' + round(hours, 2) + ' h</div>' +
-    '<div class="summary-cell center">' + Math.round(target) + ' g</div>' +
-    '<div>' + gelText + '</div>' +
-    '<div class="summary-cell center">' +
-      (bottleCarbs ? bottleCarbs + ' g' : '–') +
-    '</div>' +
-    '<div class="summary-cell center">' + total + ' g</div>' +
-    '<div class="summary-cell center">' +
-      (hours > 0
-        ? '<button class="ghost edit-btn" data-discipline="' + label + '" title="Edit allocation">✏</button>'
-        : ''
-      ) +
-    '</div>' +
-  '</div>'
-);
-
-
+  
 function renderSummaryTotalRow(target, actual) {
   return (
     '<div class="summary-grid total">' +
