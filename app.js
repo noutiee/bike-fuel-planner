@@ -297,10 +297,6 @@ function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
   var saveBtn = document.querySelector('.editor-save');
   if (saveBtn) {
     saveBtn.onclick = function () {
-      var alloc =
-        discipline === 'Swim' ? allocSwim :
-        discipline === 'Bike' ? allocBike :
-        allocRun;
      
 manualOverrides[discipline] = draftPicks.map(function (p) {
   return Object.assign({}, p);
