@@ -133,7 +133,16 @@ var total = Math.round(totalGelCarbs + bottleCarbs);
 if (activeEditDiscipline === label) {
   rowHtml +=
     '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
-      renderAllocationEditor(label, draftPicks, target, bottleCarbs) +
+      
+renderAllocationEditor(
+  label,
+  draftPicks,
+  target,
+  bottleCarbs,
+  allocSwim,
+  allocBike,
+  allocRun
+) +
     '</div>';
 }
 
@@ -154,7 +163,15 @@ function renderSummaryTotalRow(target, actual) {
   );
 }
 
-function renderAllocationEditor(label, allocPicks, target, bottleCarbsForEditor) {
+function renderAllocationEditor(
+  label,
+  allocPicks,
+  target,
+  bottleCarbsForEditor,
+  allocSwim,
+  allocBike,
+  allocRun
+) {
 
   var inventory = GelInventory.loadInventory();
 
