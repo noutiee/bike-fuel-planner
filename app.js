@@ -393,6 +393,9 @@ function calculateAndShowSummary() {
 
     var bikeBottleCarbs = Math.min(bikeTarget, numBottles * maxBottleCarbs);
     var bikeGelTarget   = Math.max(0, bikeTarget - bikeBottleCarbs);
+  
+// Total carbs from bottles (known upfront)
+var bottleCarbsTotal = Math.round(bikeBottleCarbs);
 
 
 // ===============================
@@ -553,9 +556,6 @@ var targetCarbsTotal = Math.round(
   swimTarget + bikeTarget + runTarget
 );
 
-// Difference (positive = surplus, negative = shortage)
-var carbDelta = actualCarbsTotal - targetCarbsTotal;
-
 // ---- Apply manual overrides if present ----
 if (manualOverrides.Swim) {
   allocSwim.picks = manualOverrides.Swim.map(function (p) {
@@ -586,6 +586,9 @@ var gelCarbsTotal = Math.round(
 
 // ---- Total actual carbs (packed) ----
 var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
+
+// Difference (positive = surplus, negative = shortage)
+var carbDelta = actualCarbsTotal - targetCarbsTotal;
 
 $('sSummary').innerHTML =
   renderSummaryHeader() +
