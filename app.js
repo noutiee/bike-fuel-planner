@@ -176,9 +176,8 @@ var delta = currentCarbs - target;
   });
 
 
-function countAvailable(id, totalQty) {
 
-  // total usage across ALL disciplines
+function countAvailable(id, totalQty) {
   var usedTotal = []
     .concat(
       allocSwim.picks,
@@ -189,13 +188,7 @@ function countAvailable(id, totalQty) {
       return p.id === id;
     }).length;
 
-  // usage in THIS discipline (draft)
-  var usedHere = allocPicks.filter(function (p) {
-    return p.id === id;
-  }).length;
-
-  // remaining global inventory + what this discipline already owns
-  return Math.max(0, totalQty - usedTotal + usedHere);
+  return Math.max(0, totalQty - usedTotal);
 }
 
 var rows = inventory.map(function (g) {
