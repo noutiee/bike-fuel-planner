@@ -548,25 +548,10 @@ console.log('------------------------');
 
 // ---- Totals summary ----
 
-// Total carbs from bottles (already known)
-var bottleCarbsTotal = Math.round(bikeBottleCarbs);
-
-// Total carbs from gels (from inventory allocation)
-var gelCarbsTotal = Math.round(
-  allocSwim.picks
-    .concat(allocBike.picks, allocRun.picks)
-    .reduce(function (sum, p) {
-      return sum + p.carbs;
-    }, 0)
-);
-
 // ---- Total target carbs ----
 var targetCarbsTotal = Math.round(
   swimTarget + bikeTarget + runTarget
 );
-
-// ---- Total actual carbs (packed) ----
-var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
 
 // Difference (positive = surplus, negative = shortage)
 var carbDelta = actualCarbsTotal - targetCarbsTotal;
@@ -587,6 +572,20 @@ if (manualOverrides.Run) {
     return Object.assign({}, p);
   });
 }
+
+// ---- Totals summary (AFTER overrides) ----
+
+// Total carbs from gels (FINAL plan)
+var gelCarbsTotal = Math.round(
+  allocSwim.picks
+    .concat(allocBike.picks, allocRun.picks)
+    .reduce(function (sum, p) {
+      return sum + p.carbs;
+    }, 0)
+);
+
+// ---- Total actual carbs (packed) ----
+var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
 
 $('sSummary').innerHTML =
   renderSummaryHeader() +
