@@ -215,7 +215,7 @@ var delta = currentCarbs - target;
 '<strong>Target:</strong> ' + Math.round(target) + ' g · ' +
 '<strong>Current:</strong> ' + Math.round(currentCarbs) + ' g · ' +
 '<strong>Δ:</strong> ' +
-(delta > 0 ? '+' : '') + Math.round(delta) + ' g'
+(delta > 0 ? '+' : '') + Math.round(delta) + ' g' +
 '</div>' +
 
       '<div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">' +
