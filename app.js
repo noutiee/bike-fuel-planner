@@ -187,37 +187,37 @@ function countAvailable(id, totalQty) {
 
   return Math.max(0, totalQty - usedElsewhere);
 }
+ 
+var rows = inventory.map(function (g) {
 
-  var rows = inventory.map(function (g) {
-    var allocQty = allocated[g.id] || 0;
+  var allocQty = allocated[g.id] || 0;
+  var available = countAvailable(g.id, g.quantity);
 
-    return (
-      '<div class="editor-row" ' +
-        'style="display:grid; grid-template-columns: 2fr 1fr 1.5fr; gap:8px; align-items:center; margin:4px 0;">' +
+  return (
+    '<div class="editor-row" ' +
+      'style="display:grid; grid-template-columns: 2fr 1fr 1.5fr; gap:8px; align-items:center; margin:4px 0;">' +
 
-        '<div>' +
-          g.name + ' (' + g.carbsPerGel + ' g)' +
-        '</div>' +
+      '<div>' +
+        g.name + ' (' + g.carbsPerGel + ' g)' +
+      '</div>' +
 
-var available = countAvailable(g.id, g.quantity);
+      '<div class="summary-cell center">' +
+        available +
+      '</div>' +
 
-'<div class="summary-cell center">' +
-  available +
-'</div>'
-
-        '<div class="summary-cell center">' +
-          '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
-          '<span style="display:inline-block; min-width:24px; text-align:center;">' +
-            allocQty +
-          '</span> ' +
+      '<div class="summary-cell center">' +
+        '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
+        '<span style="display:inline-block; min-width:24px; text-align:center;">' +
+          allocQty +
+        '</span> ' +
         '<button class="ghost editor-plus" data-id="' + g.id + '"' +
-  (available === 0 ? ' disabled' : '') +
-'>+</button>' +
-        '</div>' +
+          (available === 0 ? ' disabled' : '') +
+        '>+</button>' +
+      '</div>' +
 
-      '</div>'
-    );
-  }).join('');
+    '</div>'
+  );
+}).join('');
 
   return (
     '<div class="allocation-editor" ' +
