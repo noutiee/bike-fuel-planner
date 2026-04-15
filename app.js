@@ -160,6 +160,17 @@ function renderSummaryTotalRow(target, actual) {
 function renderAllocationEditor(label, allocPicks) {
   var inventory = GelInventory.loadInventory();
 
+var currentCarbs = allocPicks.reduce(function (s, p) {
+  return s + p.carbs;
+}, 0);
+
+var target =
+  label === 'Swim' ? swimTarget :
+  label === 'Bike' ? bikeTarget :
+  runTarget;
+
+var delta = currentCarbs - target;
+  
   // Count allocated picks for this discipline by gel id
   var allocated = {};
   allocPicks.forEach(function (p) {
