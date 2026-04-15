@@ -354,7 +354,7 @@ function renderOverview(
 
   if (bottleCarbs > 0) {
     html +=
-      '<p><strong>Total bottles:</strong> ' + bottleCarbs + ' g</p>';
+   '<p><strong>Total bottles:</strong> ' + Math.round(bottleCarbs) + ' g</p>';
   }
 
   html +=
