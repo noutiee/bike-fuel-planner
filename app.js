@@ -275,11 +275,14 @@ function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
         discipline === 'Swim' ? allocSwim :
         discipline === 'Bike' ? allocBike :
         allocRun;
+     
+manualOverrides[discipline] = draftPicks.map(function (p) {
+  return Object.assign({}, p);
+});
+activeEditDiscipline = null;
+draftPicks = null;
+calculateAndShowSummary();
 
-      alloc.picks = draftPicks;
-      activeEditDiscipline = null;
-      draftPicks = null;
-      calculateAndShowSummary();
     };
   }
 }
@@ -561,6 +564,23 @@ var actualCarbsTotal = bottleCarbsTotal + gelCarbsTotal;
 
 // Difference (positive = surplus, negative = shortage)
 var carbDelta = actualCarbsTotal - targetCarbsTotal;
+
+// ---- Apply manual overrides if present ----
+if (manualOverrides.Swim) {
+  allocSwim.picks = manualOverrides.Swim.map(function (p) {
+    return Object.assign({}, p);
+  });
+}
+if (manualOverrides.Bike) {
+  allocBike.picks = manualOverrides.Bike.map(function (p) {
+    return Object.assign({}, p);
+  });
+}
+if (manualOverrides.Run) {
+  allocRun.picks = manualOverrides.Run.map(function (p) {
+    return Object.assign({}, p);
+  });
+}
 
 $('sSummary').innerHTML =
   renderSummaryHeader() +
