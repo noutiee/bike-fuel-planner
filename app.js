@@ -175,15 +175,27 @@ var delta = currentCarbs - target;
     allocated[p.id] = (allocated[p.id] || 0) + 1;
   });
 
+
 function countAvailable(id, totalQty) {
-  var usedElsewhere = []
-    .concat(allocSwim.picks, allocBike.picks, allocRun.picks)
-    .filter(p => p.id === id && !allocPicks.includes(p))
-    .length;
 
-  var usedHere = allocPicks.filter(p => p.id === id).length;
+  // total usage across ALL disciplines
+  var usedTotal = []
+    .concat(
+      allocSwim.picks,
+      allocBike.picks,
+      allocRun.picks
+    )
+    .filter(function (p) {
+      return p.id === id;
+    }).length;
 
-  return Math.max(0, totalQty - usedElsewhere - usedHere);
+  // usage in THIS discipline (draft)
+  var usedHere = allocPicks.filter(function (p) {
+    return p.id === id;
+  }).length;
+
+  // remaining global inventory + what this discipline already owns
+  return Math.max(0, totalQty - usedTotal + usedHere);
 }
 
 var rows = inventory.map(function (g) {
