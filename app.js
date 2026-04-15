@@ -160,9 +160,14 @@ function renderSummaryTotalRow(target, actual) {
 function renderAllocationEditor(label, allocPicks, target) {
   var inventory = GelInventory.loadInventory();
 
-var currentCarbs = allocPicks.reduce(function (s, p) {
+
+var gelCarbs = allocPicks.reduce(function (s, p) {
   return s + p.carbs;
 }, 0);
+
+var bottleCarbs = (label === 'Bike') ? Math.round(bikeBottleCarbs) : 0;
+
+var currentCarbs = gelCarbs + bottleCarbs;
 
 var delta = currentCarbs - target;
   
@@ -206,10 +211,11 @@ var delta = currentCarbs - target;
       '<h4 style="margin:0 0 8px 0;">Edit ' + label + ' allocation</h4>' +
 
 '<div style="margin:6px 0 10px 0; font-size:0.9rem;">' +
-  '<strong>Target:</strong> ' + Math.round(target) + ' g · ' +
-  '<strong>Current:</strong> ' + currentCarbs + ' g · ' +
-  '<strong>Δ:</strong> ' +
-  (delta > 0 ? '+' : '') + delta + ' g' +
+
+'<strong>Target:</strong> ' + Math.round(target) + ' g · ' +
+'<strong>Current:</strong> ' + Math.round(currentCarbs) + ' g · ' +
+'<strong>Δ:</strong> ' +
+(delta > 0 ? '+' : '') + Math.round(delta) + ' g'
 '</div>' +
 
       '<div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">' +
