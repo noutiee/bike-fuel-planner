@@ -112,7 +112,7 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
     }
   }
 
-  var total = totalGelCarbs + bottleCarbs;
+var total = Math.round(totalGelCarbs + bottleCarbs);
 
   var rowHtml =
     '<div class="summary-grid row">' +
@@ -121,7 +121,7 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
       '<div class="summary-cell center">' + Math.round(target) + ' g</div>' +
       '<div>' + gelText + '</div>' +
       '<div class="summary-cell center">' +
-        (bottleCarbs ? bottleCarbs + ' g' : '–') +
+        (bottleCarbs ? Math.round(bottleCarbs) + ' g' : '–') +
       '</div>' +
       '<div class="summary-cell center">' + total + ' g</div>' +
       '<div class="summary-cell center">' +
@@ -135,7 +135,7 @@ function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
 if (activeEditDiscipline === label) {
   rowHtml +=
     '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
-      renderAllocationEditor(label, draftPicks) +
+      renderAllocationEditor(label, draftPicks, target) +
     '</div>';
 }
 
@@ -157,17 +157,12 @@ function renderSummaryTotalRow(target, actual) {
 }
 
 
-function renderAllocationEditor(label, allocPicks) {
+function renderAllocationEditor(label, allocPicks, target) {
   var inventory = GelInventory.loadInventory();
 
 var currentCarbs = allocPicks.reduce(function (s, p) {
   return s + p.carbs;
 }, 0);
-
-var target =
-  label === 'Swim' ? swimTarget :
-  label === 'Bike' ? bikeTarget :
-  runTarget;
 
 var delta = currentCarbs - target;
   
