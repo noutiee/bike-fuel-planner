@@ -537,16 +537,18 @@ var deltaLabel = carbDelta === 0
       : carbDelta + ' g');
 
 // Copy summary to clipboard
-document.getElementById('btnCopySummary').onclick = function () {
-  var text =
-    $('s1').innerText + '\n' +
-    $('s2').innerText + '\n' +
-    $('s3').innerText + '\n' +
-    $('s4').innerText;
 
-  navigator.clipboard.writeText(text);
-};
+var btnCopy = document.getElementById('btnCopySummary');
+if (btnCopy) {
+  btnCopy.onclick = function () {
+    var text =
+      $('sSummary').innerText + '\n\n' +
+      $('sSummaryTotal').innerText + '\n\n' +
+      $('sOverview').innerText;
 
+    navigator.clipboard.writeText(text);
+  };
+}
 
     function list(title, alloc) {
       if (!alloc.picks.length) {
