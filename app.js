@@ -177,18 +177,15 @@ var delta = currentCarbs - target;
 
 function countAvailable(id, totalQty) {
   var usedElsewhere = []
-    .concat(
-      allocSwim.picks,
-      allocBike.picks,
-      allocRun.picks
-    )
-    .filter(function (p) {
-      return p.id === id && !allocPicks.includes(p);
-    }).length;
+    .concat(allocSwim.picks, allocBike.picks, allocRun.picks)
+    .filter(p => p.id === id && !allocPicks.includes(p))
+    .length;
 
-  return Math.max(0, totalQty - usedElsewhere);
+  var usedHere = allocPicks.filter(p => p.id === id).length;
+
+  return Math.max(0, totalQty - usedElsewhere - usedHere);
 }
- 
+
 var rows = inventory.map(function (g) {
 
   var allocQty = allocated[g.id] || 0;
@@ -271,7 +268,14 @@ function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
       var gel = inventory.find(function (g) { return g.id === id; });
       if (!gel) return;
 
-      if (countUsedAcrossAll(id) >= gel.quantity) return;
+var usedElsewhere = []
+  .concat(allocSwim.picks, allocBike.picks, allocRun.picks)
+  .filter(p => p.id === id && !draftPicks.includes(p))
+  .length;
+
+var usedHere = draftPicks.filter(p => p.id === id).length;
+
+if (usedElsewhere + usedHere >= gel.quantity) return;
 
       draftPicks.push({
         id: gel.id,
