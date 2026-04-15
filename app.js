@@ -207,6 +207,82 @@ function renderAllocationEditor(label, allocPicks) {
     '</div>'
   );
 }
+
+function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
+  var inventory = GelInventory.loadInventory();
+
+  function getAllocContainer() {
+    return draftPicks;
+  }
+
+  function countUsedAcrossAll(id) {
+    return []
+      .concat(allocSwim.picks, allocBike.picks, allocRun.picks)
+      .filter(function (p) {
+        return p.id === id;
+      }).length;
+  }
+
+  // PLUS buttons
+  document.querySelectorAll('.editor-plus').forEach(function (btn) {
+    btn.onclick = function () {
+      var id = this.dataset.id;
+      var gel = inventory.find(function (g) { return g.id === id; });
+      if (!gel) return;
+
+      if (countUsedAcrossAll(id) >= gel.quantity) return;
+
+      draftPicks.push({
+        id: gel.id,
+        name: gel.name,
+        carbs: gel.carbsPerGel,
+        used: 1
+      });
+
+      calculateAndShowSummary();
+    };
+  });
+
+  // MINUS buttons
+  document.querySelectorAll('.editor-minus').forEach(function (btn) {
+    btn.onclick = function () {
+      var id = this.dataset.id;
+      var idx = draftPicks.findIndex(function (p) {
+        return p.id === id;
+      });
+      if (idx === -1) return;
+
+      draftPicks.splice(idx, 1);
+      calculateAndShowSummary();
+    };
+  });
+
+  // CANCEL
+  var cancelBtn = document.querySelector('.editor-cancel');
+  if (cancelBtn) {
+    cancelBtn.onclick = function () {
+      activeEditDiscipline = null;
+      draftPicks = null;
+      calculateAndShowSummary();
+    };
+  }
+
+  // SAVE
+  var saveBtn = document.querySelector('.editor-save');
+  if (saveBtn) {
+    saveBtn.onclick = function () {
+      var alloc =
+        discipline === 'Swim' ? allocSwim :
+        discipline === 'Bike' ? allocBike :
+        allocRun;
+
+      alloc.picks = draftPicks;
+      activeEditDiscipline = null;
+      draftPicks = null;
+      calculateAndShowSummary();
+    };
+  }
+}
   
 function renderOverview(
   swimH,
