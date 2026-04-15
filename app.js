@@ -508,6 +508,16 @@ $('sOverview').innerHTML =
     actualCarbsTotal
   );
 
+// ---- Wire allocation editor buttons (ONLY when editor is open) ----
+if (activeEditDiscipline && draftPicks) {
+  wireAllocationEditor(
+    activeEditDiscipline,
+    allocSwim,
+    allocBike,
+    allocRun
+  );
+}
+
 // ---- Wire edit buttons ----
 document.querySelectorAll('.edit-btn').forEach(function (btn) {
   btn.onclick = function () {
