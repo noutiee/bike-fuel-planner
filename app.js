@@ -177,18 +177,24 @@ var delta = currentCarbs - target;
 
 
 
-function countAvailable(id, totalQty) {
-  var usedTotal = []
-    .concat(
-      allocSwim.picks,
-      allocBike.picks,
-      allocRun.picks
-    )
-    .filter(function (p) {
-      return p.id === id;
-    }).length;
 
-  return Math.max(0, totalQty - usedTotal);
+function countAvailable(id, totalQty) {
+
+  // build effective allocation:
+  // all disciplines, but THIS one uses draftPicks
+  var effectivePicks = []
+    .concat(
+      label === 'Swim' ? draftPicks : allocSwim.picks,
+      label === 'Bike' ? draftPicks : allocBike.picks,
+      label === 'Run'  ? draftPicks : allocRun.picks
+    );
+
+  // count how many are already used (including draft)
+  var usedTotalEffective = effectivePicks.filter(function (p) {
+    return p.id === id;
+  }).length;
+
+  return Math.max(0, totalQty - usedTotalEffective);
 }
 
 var rows = inventory.map(function (g) {
