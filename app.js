@@ -89,8 +89,6 @@ function renderSummaryHeader() {
   );
 }
 
-
-
 function renderSummaryRow(label, hours, target, gelPicks, bottleCarbs) {
   if (!hours || hours <= 0) return '';
 
@@ -156,8 +154,6 @@ function renderSummaryTotalRow(target, actual) {
   );
 }
 
-
-
 function renderAllocationEditor(label, allocPicks, target, bottleCarbsForEditor) {
 
   var inventory = GelInventory.loadInventory();
@@ -178,6 +174,20 @@ var delta = currentCarbs - target;
     allocated[p.id] = (allocated[p.id] || 0) + 1;
   });
 
+function countAvailable(id, totalQty) {
+  var usedElsewhere = []
+    .concat(
+      allocSwim.picks,
+      allocBike.picks,
+      allocRun.picks
+    )
+    .filter(function (p) {
+      return p.id === id && !allocPicks.includes(p);
+    }).length;
+
+  return Math.max(0, totalQty - usedElsewhere);
+}
+
   var rows = inventory.map(function (g) {
     var allocQty = allocated[g.id] || 0;
 
@@ -189,16 +199,20 @@ var delta = currentCarbs - target;
           g.name + ' (' + g.carbsPerGel + ' g)' +
         '</div>' +
 
-        '<div class="summary-cell center">' +
-          g.quantity +
-        '</div>' +
+var available = countAvailable(g.id, g.quantity);
+
+'<div class="summary-cell center">' +
+  available +
+'</div>'
 
         '<div class="summary-cell center">' +
           '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
           '<span style="display:inline-block; min-width:24px; text-align:center;">' +
             allocQty +
           '</span> ' +
-          '<button class="ghost editor-plus" data-id="' + g.id + '">+</button>' +
+        '<button class="ghost editor-plus" data-id="' + g.id + '"' +
+  (available === 0 ? ' disabled' : '') +
+'>+</button>' +
         '</div>' +
 
       '</div>'
