@@ -758,6 +758,7 @@ if (btnCopy) {
         GelInventory.deductPlanFromInventory(all);
         GelInventory.renderTable();
         alert('Inventory updated');
+        document.getElementById('overlay').classList.remove('show');
       };
     }
   }
