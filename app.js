@@ -130,22 +130,6 @@ var total = Math.round(totalGelCarbs + bottleCarbs);
       '</div>' +
     '</div>';
 
-if (activeEditDiscipline === label) {
-  rowHtml +=
-    '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
-      
-renderAllocationEditor(
-  label,
-  draftPicks,
-  target,
-  bottleCarbs,
-  allocSwim,
-  allocBike,
-  allocRun
-) +
-    '</div>';
-}
-
   return rowHtml;
 }
 
@@ -645,6 +629,29 @@ $('sSummary').innerHTML =
 
 $('sSummaryTotal').innerHTML =
   renderSummaryTotalRow(targetCarbsTotal, actualCarbsTotal);
+
+if (activeEditDiscipline && draftPicks) {
+  var editorHtml =
+    renderAllocationEditor(
+      activeEditDiscipline,
+      draftPicks,
+      activeEditDiscipline === 'Swim' ? swimTarget :
+      activeEditDiscipline === 'Bike' ? bikeTarget :
+      runTarget,
+      activeEditDiscipline === 'Bike' ? bikeBottleCarbs : 0,
+      allocSwim,
+      allocBike,
+      allocRun
+    );
+
+  // inject editor directly below summary table
+  $('sSummary').insertAdjacentHTML('beforeend',
+    '<div class="inline-editor" style="margin: 6px 12px 12px;">' +
+      editorHtml +
+    '</div>'
+  );
+}
+``
 
 $('sOverview').innerHTML =
   renderOverview(
