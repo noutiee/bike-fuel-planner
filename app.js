@@ -150,6 +150,7 @@ function renderSummaryTotalRow(target, actual) {
   );
 }
 
+
 function renderAllocationEditor(label, allocPicks) {
   var inventory = GelInventory.loadInventory();
 
@@ -163,27 +164,46 @@ function renderAllocationEditor(label, allocPicks) {
     var allocQty = allocated[g.id] || 0;
 
     return (
-      '<div class="editor-row" style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:8px; align-items:center;">' +
-        '<div>' + g.name + ' (' + g.carbsPerGel + ' g)</div>' +
-        '<div class="summary-cell center">' + g.quantity + '</div>' +
+      '<div class="editor-row" ' +
+        'style="display:grid; grid-template-columns: 2fr 1fr 1.5fr; gap:8px; align-items:center; margin:4px 0;">' +
+
+        '<div>' +
+          g.name + ' (' + g.carbsPerGel + ' g)' +
+        '</div>' +
+
+        '<div class="summary-cell center">' +
+          g.quantity +
+        '</div>' +
+
         '<div class="summary-cell center">' +
           '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
-          allocQty +
-          ' <button class="ghost editor-plus" data-id="' + g.id + '">+</button>' +
+          '<span style="display:inline-block; min-width:24px; text-align:center;">' +
+            allocQty +
+          '</span> ' +
+          '<button class="ghost editor-plus" data-id="' + g.id + '">+</button>' +
         '</div>' +
+
       '</div>'
     );
   }).join('');
 
   return (
-    '<div class="allocation-editor" style="padding:10px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px;">' +
-      '<h4>Edit ' + label + ' allocation</h4>' +
-      '<div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">Inventory / Allocated</div>' +
+    '<div class="allocation-editor" ' +
+         'style="padding:12px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px;">' +
+
+      '<h4 style="margin:0 0 8px 0;">Edit ' + label + ' allocation</h4>' +
+
+      '<div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">' +
+        '<strong>Inventory</strong> / <strong>Allocated</strong>' +
+      '</div>' +
+
       rows +
+
       '<div style="display:flex; gap:8px; margin-top:12px;">' +
         '<button class="ghost editor-cancel">Cancel</button>' +
         '<button class="ghost editor-save">Save</button>' +
       '</div>' +
+
     '</div>'
   );
 }
