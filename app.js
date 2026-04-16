@@ -360,7 +360,12 @@ function countAvailable(id, totalQty) {
 var rows = inventory.map(function (g) {
 
   var allocQty = allocated[g.id] || 0;
-  var available = countAvailable(g.id, g.quantity);
+  
+var totalQty = inventory.filter(function (x) {
+  return x.id === g.id;
+}).length;
+
+var available = countAvailable(g.id, totalQty);
 
   return (
     '<div class="editor-row" ' +
@@ -632,21 +637,14 @@ var inventory = GelInventory.flattenInventory();
 var gels = [];
 
 inventory.forEach(function (item) {
-  if (!item.quantity || !item.carbsPerGel) return;
-
-
-var perGel = item.carbsPerGel;
-
-for (var i = 0; i < item.quantity; i++) {
   gels.push({
     id: item.id,
     name: item.name,
-    carbs: perGel,
-    expiry: item.expiry,      // ISO string
+    carbs: item.carbs,
+    expiry: item.expiry,
     caffeineMg: item.caffeineMg || 0,
     used: 1
   });
-}
 });
 
 // Result buckets
