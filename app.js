@@ -157,26 +157,163 @@ function renderAllocationEditor(
   allocRun
 ) {
 
-  var inventory = GelInventory.loadInventory();
+var GelInventory = (function () {
 
-var gelCarbs = allocPicks.reduce(function (s, p) {
-  return s + p.carbs;
-}, 0);
+  var STORAGE_KEY = 'gelInventory';
 
-var bottleCarbs = Math.round(bottleCarbsForEditor || 0);
+  function load() {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  }
 
-var currentCarbs = gelCarbs + bottleCarbs;
-
-var delta = currentCarbs - target;
+  function save(inventory) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+  }
   
+  function gelId(name, carbs, caffeine) {
+    return (
+      name.toLowerCase().replace(/\s+/g, '-') +
+      '-' + carbs +
+      '-' + (caffeine || 0)
+    );
+  }
+
+  function batchId() {
+    return 'b-' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function addNewGel(data) {
+    var inventory = load();
+
+    var id = gelId(data.name, data.carbsPerGel, data.caffeineMg);
+
+    if (inventory.some(g => g.id === id)) {
+      throw new Error('Gel already exists, add batch instead');
+    }
+
+    inventory.push({
+      id: id,
+      name: data.name,
+      carbsPerGel: data.carbsPerGel,
+      caffeineMg: data.caffeineMg || 0,
+      batches: [{
+        batchId: batchId(),
+        expiry: data.expiry,
+        quantity: data.quantity
+      }]
+    });
+
+    save(inventory);
+  }
+
+  function addBatch(gelId, expiry, quantity) {
+    var inventory = load();
+    var gel = inventory.find(g => g.id === gelId);
+    if (!gel) return;
+
+    gel.batches.push({
+      batchId: batchId(),
+      expiry: expiry,
+      quantity: quantity
+    });
+
+    save(inventory);
+  }
+
+  function deduct(gelId, qty) {
+    var inventory = load();
+    var gel = inventory.find(g => g.id === gelId);
+    if (!gel) return;
+
+    gel.batches.sort(function (a, b) {
+      return new Date(a.expiry) - new Date(b.expiry);
+    });
+
+    gel.batches.forEach(function (batch) {
+      if (qty <= 0) return;
+      var take = Math.min(batch.quantity, qty);
+      batch.quantity -= take;
+      qty -= take;
+    });
+
+    // remove empty batches
+    gel.batches = gel.batches.filter(b => b.quantity > 0);
+
+    // remove gel entirely if empty
+    if (gel.batches.length === 0) {
+      inventory = inventory.filter(g => g.id !== gelId);
+    }
+
+    save(inventory);
+  }
+
+  function increase(gelId, qty) {
+    var inventory = load();
+    var gel = inventory.find(g => g.id === gelId);
+    if (!gel) return;
+
+    gel.batches.sort(function (a, b) {
+      return new Date(b.expiry) - new Date(a.expiry);
+    });
+
+    gel.batches[0].quantity += qty;
+    save(inventory);
+  }
+
+  function flatten() {
+    var inventory = load();
+    var units = [];
+
+    inventory.forEach(function (gel) {
+      gel.batches.forEach(function (batch) {
+        for (var i = 0; i < batch.quantity; i++) {
+          units.push({
+            id: gel.id,
+            name: gel.name,
+            carbs: gel.carbsPerGel,
+            caffeineMg: gel.caffeineMg || 0,
+            expiry: batch.expiry
+          });
+        }
+      });
+    });
+
+    return units;
+  }
+
+  function deductPlan(picks) {
+    var grouped = {};
+    picks.forEach(function (p) {
+      grouped[p.id] = (grouped[p.id] || 0) + 1;
+    });
+
+    Object.keys(grouped).forEach(function (gelId) {
+      deduct(gelId, grouped[gelId]);
+    });
+  }
+
+  return {
+    loadInventory: load,
+    saveInventory: save,
+
+    addNewGel: addNewGel,
+    addBatch: addBatch,
+
+    deductGel: deduct,
+    increaseGel: increase,
+    deductPlanFromInventory: deductPlan,
+
+    flattenInventory: flatten
+  };
+
+})();
+
   // Count allocated picks for this discipline by gel id
   var allocated = {};
   allocPicks.forEach(function (p) {
     allocated[p.id] = (allocated[p.id] || 0) + 1;
   });
-
-
-
 
 function countAvailable(id, totalQty) {
 
@@ -258,7 +395,7 @@ var rows = inventory.map(function (g) {
 }
 
 function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
-  var inventory = GelInventory.loadInventory();
+  var inventory = GelInventory.flattenInventory();
 
   function getAllocContainer() {
     return draftPicks;
@@ -428,7 +565,7 @@ function calculateAndShowSummary() {
     var runMaxGel   = Number($('runMaxGel').value) || 30;
 
     var expiryInput = Number($('expiryHorizonDays').value);
-    var totalInventory = GelInventory.loadInventory()
+    var totalInventory = GelInventory.flattenInventory()
       .reduce(function (s, g) { return s + (g.quantity || 0); }, 0);
 
     var expiryHorizon = (expiryInput > 0) ? expiryInput : totalInventory;
@@ -466,7 +603,7 @@ var totalTarget = swimTarget + bikeGelTarget + runTarget;
 var currentTotal = 0;
 
 // Load inventory as INDIVIDUAL gel units
-var inventory = GelInventory.loadInventory();
+var inventory = GelInventory.flattenInventory();
 var gels = [];
 
 inventory.forEach(function (item) {
