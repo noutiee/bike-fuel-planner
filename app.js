@@ -40,7 +40,7 @@ function flattenInventory() {
 
     for (var i = 0; i < qty; i++) {
       units.push({
-        id: gel.id || gel.name,     // safe fallback
+        id: gel.id || gel.name,
         name: gel.name,
         carbs: carbs,
         caffeineMg: gel.caffeineMg || 0,
@@ -51,12 +51,6 @@ function flattenInventory() {
 
   return units;
 }
-
-      });
-    });
-
-    return units;
-  }
 
   return {
     loadInventory: load,
