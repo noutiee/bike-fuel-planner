@@ -27,21 +27,31 @@ var GelInventory = (function () {
     );
   }
 
-  function flattenInventory() {
-    var inventory = load();
-    var units = [];
+function flattenInventory() {
+  var inventory = load();
+  var units = [];
 
-    inventory.forEach(function (gel) {
-      (gel.batches || []).forEach(function (batch) {
-        for (var i = 0; i < batch.quantity; i++) {
-          units.push({
-            id: gel.id,
-            name: gel.name,
-            carbs: gel.carbsPerGel,
-            caffeineMg: gel.caffeineMg || 0,
-            expiry: batch.expiry
-          });
-        }
+  inventory.forEach(function (gel) {
+    var qty = Number(gel.qty) || 0;
+    var carbs = Number(gel.carbs) || 0;
+
+    // ignore empty or invalid inventory rows
+    if (qty <= 0 || carbs <= 0) return;
+
+    for (var i = 0; i < qty; i++) {
+      units.push({
+        id: gel.id || gel.name,     // safe fallback
+        name: gel.name,
+        carbs: carbs,
+        caffeineMg: gel.caffeineMg || 0,
+        expiry: gel.expiry
+      });
+    }
+  });
+
+  return units;
+}
+
       });
     });
 
@@ -372,7 +382,7 @@ var available = countAvailable(g.id, totalQty);
       'style="display:grid; grid-template-columns: 2fr 1fr 1.5fr; gap:8px; align-items:center; margin:4px 0;">' +
 
       '<div>' +
-        g.name + ' (' + g.carbsPerGel + ' g)' +
+g.name + ' (' + g.carbs + ' g)' +
       '</div>' +
 
       '<div class="summary-cell center">' +
@@ -453,15 +463,20 @@ var usedElsewhere = []
 
 var usedHere = draftPicks.filter(p => p.id === id).length;
 
-if (usedElsewhere + usedHere >= gel.quantity) return;
+var availableQty = inventory.filter(function (x) {
+  return x.id === id;
+}).length;
 
-      draftPicks.push({
-        id: gel.id,
-        name: gel.name,
-        carbs: gel.carbsPerGel,
-        used: 1
-      });
+if (usedElsewhere + usedHere >= availableQty) return;
 
+      
+draftPicks.push({
+  id: gel.id,
+  name: gel.name,
+  carbs: gel.carbs,
+  used: 1
+});
+      
       calculateAndShowSummary();
     };
   });
