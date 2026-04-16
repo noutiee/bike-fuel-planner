@@ -210,6 +210,8 @@ function renderAllocationEditor(
   allocRun
 ) {
 
+    var inventory = GelInventory.flattenInventory();
+  
   function batchId() {
     return 'b-' + Math.random().toString(36).slice(2, 9);
   }
