@@ -5,7 +5,7 @@
 (function () {
   function $(id) { return document.getElementById(id); }
 
-var GelInventory = (function () {
+window.GelInventory = (function () {
 
   var STORAGE_KEY = 'gelInventory';
 
