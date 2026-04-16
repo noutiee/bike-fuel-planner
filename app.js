@@ -25,6 +25,8 @@ var GelInventory = (function () {
       '-' + (caffeine || 0)
     );
   }
+  })();
+  
   /* -----------------------------
      Slider ↔ Number input sync
   ------------------------------ */
@@ -291,20 +293,6 @@ function renderAllocationEditor(
     });
   }
 
-  return {
-    loadInventory: load,
-    saveInventory: save,
-
-    addNewGel: addNewGel,
-    addBatch: addBatch,
-
-    deductGel: deduct,
-    increaseGel: increase,
-    deductPlanFromInventory: deductPlan,
-
-    flattenInventory: flatten
-  };
-
   // Count allocated picks for this discipline by gel id
   var allocated = {};
   allocPicks.forEach(function (p) {
@@ -358,7 +346,9 @@ var rows = inventory.map(function (g) {
       '</div>' +
 
     '</div>'
-  );
+  );}
+
+                         
 }).join('');
 
   return (
