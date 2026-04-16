@@ -346,7 +346,7 @@ var rows = inventory.map(function (g) {
       '</div>' +
 
     '</div>'
-  );}
+  );
 
                          
 }).join('');
