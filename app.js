@@ -7,7 +7,7 @@
 
 window.GelInventory = (function () {
 
-  var STORAGE_KEY = 'gelInventory';
+var STORAGE_KEY = 'bikeFuelPlanner.gelInventory.v1';
 
   function loadInventory() {
     var raw = localStorage.getItem(STORAGE_KEY);
