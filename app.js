@@ -24,8 +24,8 @@ window.GelInventory = (function () {
     var units = [];
 
     inventory.forEach(function (gel) {
-      var qty = Number(gel.qty) || 0;
-      var carbs = Number(gel.carbs) || 0;
+var qty = Number(gel.quantity) || 0;
+var carbs = Number(gel.carbsPerGel) || 0;
 
       if (qty <= 0 || carbs <= 0) return;
 
