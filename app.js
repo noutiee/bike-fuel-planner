@@ -304,7 +304,6 @@ function renderAllocationEditor(
 
     flattenInventory: flatten
   };
-
 })();
 
   // Count allocated picks for this discipline by gel id
@@ -921,7 +920,4 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 });
-
-
-
 })();
