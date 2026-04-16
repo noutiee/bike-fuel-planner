@@ -212,6 +212,12 @@ function renderAllocationEditor(
 
     var inventory = GelInventory.flattenInventory();
   
+var currentCarbs = allocPicks.reduce(function (s, p) {
+  return s + p.carbs;
+}, 0);
+
+var delta = currentCarbs - target;
+
   function batchId() {
     return 'b-' + Math.random().toString(36).slice(2, 9);
   }
