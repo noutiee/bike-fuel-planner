@@ -4,7 +4,27 @@
 
 (function () {
   function $(id) { return document.getElementById(id); }
+var GelInventory = (function () {
 
+  var STORAGE_KEY = 'gelInventory';
+
+  function load() {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  }
+
+  function save(inventory) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+  }
+  
+  function gelId(name, carbs, caffeine) {
+    return (
+      name.toLowerCase().replace(/\s+/g, '-') +
+      '-' + carbs +
+      '-' + (caffeine || 0)
+    );
+  }
   /* -----------------------------
      Slider ↔ Number input sync
   ------------------------------ */
@@ -156,28 +176,6 @@ function renderAllocationEditor(
   allocBike,
   allocRun
 ) {
-
-var GelInventory = (function () {
-
-  var STORAGE_KEY = 'gelInventory';
-
-  function load() {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  }
-
-  function save(inventory) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-  }
-  
-  function gelId(name, carbs, caffeine) {
-    return (
-      name.toLowerCase().replace(/\s+/g, '-') +
-      '-' + carbs +
-      '-' + (caffeine || 0)
-    );
-  }
 
   function batchId() {
     return 'b-' + Math.random().toString(36).slice(2, 9);
