@@ -4,6 +4,7 @@
 
 (function () {
   function $(id) { return document.getElementById(id); }
+
 var GelInventory = (function () {
 
   var STORAGE_KEY = 'gelInventory';
@@ -17,7 +18,7 @@ var GelInventory = (function () {
   function save(inventory) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
   }
-  
+
   function gelId(name, carbs, caffeine) {
     return (
       name.toLowerCase().replace(/\s+/g, '-') +
@@ -25,7 +26,37 @@ var GelInventory = (function () {
       '-' + (caffeine || 0)
     );
   }
-  })();
+
+  function flattenInventory() {
+    var inventory = load();
+    var units = [];
+
+    inventory.forEach(function (gel) {
+      (gel.batches || []).forEach(function (batch) {
+        for (var i = 0; i < batch.quantity; i++) {
+          units.push({
+            id: gel.id,
+            name: gel.name,
+            carbs: gel.carbsPerGel,
+            caffeineMg: gel.caffeineMg || 0,
+            expiry: batch.expiry
+          });
+        }
+      });
+    });
+
+    return units;
+  }
+
+  return {
+    loadInventory: load,
+    saveInventory: save,
+    gelId: gelId,
+    flattenInventory: flattenInventory
+  };
+
+})();
+
   
   /* -----------------------------
      Slider ↔ Number input sync
