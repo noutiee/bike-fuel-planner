@@ -9,58 +9,47 @@ var GelInventory = (function () {
 
   var STORAGE_KEY = 'gelInventory';
 
-  function load() {
+  function loadInventory() {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     return JSON.parse(raw);
   }
 
-  function save(inventory) {
+  function saveInventory(inventory) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
   }
 
-  function gelId(name, carbs, caffeine) {
-    return (
-      name.toLowerCase().replace(/\s+/g, '-') +
-      '-' + carbs +
-      '-' + (caffeine || 0)
-    );
+  function flattenInventory() {
+    var inventory = loadInventory();
+    var units = [];
+
+    inventory.forEach(function (gel) {
+      var qty = Number(gel.qty) || 0;
+      var carbs = Number(gel.carbs) || 0;
+
+      if (qty <= 0 || carbs <= 0) return;
+
+      for (var i = 0; i < qty; i++) {
+        units.push({
+          id: gel.id || gel.name,
+          name: gel.name,
+          carbs: carbs,
+          caffeineMg: gel.caffeineMg || 0,
+          expiry: gel.expiry
+        });
+      }
+    });
+
+    return units;
   }
 
-function flattenInventory() {
-  var inventory = load();
-  var units = [];
-
-  inventory.forEach(function (gel) {
-    var qty = Number(gel.qty) || 0;
-    var carbs = Number(gel.carbs) || 0;
-
-    // ignore empty or invalid inventory rows
-    if (qty <= 0 || carbs <= 0) return;
-
-    for (var i = 0; i < qty; i++) {
-      units.push({
-        id: gel.id || gel.name,
-        name: gel.name,
-        carbs: carbs,
-        caffeineMg: gel.caffeineMg || 0,
-        expiry: gel.expiry
-      });
-    }
-  });
-
-  return units;
-}
-
   return {
-    loadInventory: load,
-    saveInventory: save,
-    gelId: gelId,
+    loadInventory: loadInventory,
+    saveInventory: saveInventory,
     flattenInventory: flattenInventory
   };
 
 })();
-
   
   /* -----------------------------
      Slider ↔ Number input sync
