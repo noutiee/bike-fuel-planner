@@ -304,7 +304,6 @@ function renderAllocationEditor(
 
     flattenInventory: flatten
   };
-})();
 
   // Count allocated picks for this discipline by gel id
   var allocated = {};
