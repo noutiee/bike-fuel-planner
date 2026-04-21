@@ -446,10 +446,13 @@ function wireAllocationEditor(discipline, allocSwim, allocBike, allocRun) {
       var gel = inventory.find(function (g) { return g.id === id; });
       if (!gel) return;
 
+
 var usedElsewhere = []
   .concat(allocSwim.picks, allocBike.picks, allocRun.picks)
-  .filter(p => p.id === id && !draftPicks.includes(p))
-  .length;
+  .filter(function (p) {
+    return p.id === id;
+  }).length
+  - usedHere;
 
 var usedHere = draftPicks.filter(p => p.id === id).length;
 
