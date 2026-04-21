@@ -177,7 +177,13 @@ function renderTable() {
 
   for (var i = 0; i < raw.length; i++) {
     var g = raw[i];
-    var key = g.id || g.name;
+
+var caff = (g.caffeineMg != null ? g.caffeineMg : 0);
+
+var key =
+  g.name + '|' +
+  g.carbsPerGel + '|' +
+  caff;
 
     if (!grouped[key]) {
       grouped[key] = {
