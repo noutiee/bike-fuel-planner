@@ -197,16 +197,15 @@ var key =
         earliestExpiry: g.expiry
       };
       
-// ✅ Step 3.3: wire "✏ Batches" toggle buttons
-var toggles = tbody.querySelectorAll('button.batch-toggle');
-for (var ti = 0; ti < toggles.length; ti++) {
-  toggles[ti].addEventListener('click', function () {
+// ✅ Step 4.3: wire caret toggles
+var carets = tbody.querySelectorAll('.batch-caret');
+for (var ci = 0; ci < carets.length; ci++) {
+  carets[ci].addEventListener('click', function () {
     var key = this.dataset.key;
     expandedBatches[key] = !expandedBatches[key];
     renderTable();
   });
 }
-
     }
 
     grouped[key].totalQty += Number(g.quantity) || 0;
@@ -229,15 +228,30 @@ for (var ti = 0; ti < toggles.length; ti++) {
     else if (d <= 30) badge = '<span class="badge-expiring">' + d + 'd</span>';
 
     tr.innerHTML =
-      '<td>' + g.name + ' ' + badge + '</td>' +
+    
+var isOpen = !!expandedBatches[key];
+var caret = isOpen ? '▾' : '▸';
+
+tr.innerHTML =
+  '<td>' +
+    '<span class="batch-caret" ' +
+          'data-key="' + key + '" ' +
+          'style="cursor:pointer; font-size:1.2em; margin-right:6px;">' +
+      caret +
+    '</span>' +
+    '<strong>' + g.name + '</strong> ' + badge +
+  '</td>' +
+  '<td>' + g.carbsPerGel + '</td>' +
+  '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
+  '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
+  '<td>' + g.totalQty + '</td>' +
+  '<td></td>';
+
       '<td>' + g.carbsPerGel + '</td>' +
       '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
       '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
       '<td>' + g.totalQty + '</td>' +
-      '<td>' +
-        '<button class="ghost batch-toggle" data-key="' + key + '">✏ Batches</button>' +
-      '</td>';
-
+     
     tbody.appendChild(tr);
   });
 }
