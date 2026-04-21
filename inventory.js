@@ -161,7 +161,7 @@
   function $(id) { return document.getElementById(id); }
   
   var expandedBatches = {};
-  
+
 function renderTable() {
   var tbody = $('inventory-tbody');
   if (!tbody) return;
@@ -174,86 +174,134 @@ function renderTable() {
     return !hideExpired || x.expiry >= todayISO;
   });
 
-  // ---- group inventory by gel (display only) ----
+  // ---- group inventory by gel key ----
   var grouped = {};
 
   for (var i = 0; i < raw.length; i++) {
     var g = raw[i];
-
-var caff = (g.caffeineMg != null ? g.caffeineMg : 0);
-
-var key =
-  g.name + '|' +
-  g.carbsPerGel + '|' +
-  caff;
+    var caff = (g.caffeineMg != null ? g.caffeineMg : 0);
+    var key = g.name + '|' + g.carbsPerGel + '|' + caff;
 
     if (!grouped[key]) {
       grouped[key] = {
-        id: g.id,
+        key: key,
         name: g.name,
         carbsPerGel: g.carbsPerGel,
-        caffeineMg: g.caffeineMg,
+        caffeineMg: caff,
         totalQty: 0,
-        earliestExpiry: g.expiry
+        earliestExpiry: g.expiry,
+        batches: []
       };
-      
-// ✅ Step 4.3: wire caret toggles
-var carets = tbody.querySelectorAll('.batch-caret');
-for (var ci = 0; ci < carets.length; ci++) {
-  carets[ci].addEventListener('click', function () {
-    var key = this.dataset.key;
-    expandedBatches[key] = !expandedBatches[key];
-    renderTable();
-  });
-}
     }
 
     grouped[key].totalQty += Number(g.quantity) || 0;
-
     if (g.expiry < grouped[key].earliestExpiry) {
       grouped[key].earliestExpiry = g.expiry;
     }
+    grouped[key].batches.push(g);
   }
 
-  // ---- render grouped rows ----
+  // ---- render table ----
   tbody.innerHTML = '';
 
   Object.keys(grouped).forEach(function (key) {
     var g = grouped[key];
     var tr = document.createElement('tr');
 
-    var d = daysUntilISO(g.earliestExpiry);
-    var badge = '';
-    if (d < 0) badge = '<span class="badge-expired">expired</span>';
-    else if (d <= 30) badge = '<span class="badge-expiring">' + d + 'd</span>';
+    var isOpen = !!expandedBatches[key];
+    var caret = isOpen ? '▾' : '▸';
 
     tr.innerHTML =
-    
-var isOpen = !!expandedBatches[key];
-var caret = isOpen ? '▾' : '▸';
-
-tr.innerHTML =
-  '<td>' +
-    '<span class="batch-caret" ' +
-          'data-key="' + key + '" ' +
-          'style="cursor:pointer; font-size:1.2em; margin-right:6px;">' +
-      caret +
-    '</span>' +
-    '<strong>' + g.name + '</strong> ' + badge +
-  '</td>' +
-  '<td>' + g.carbsPerGel + '</td>' +
-  '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
-  '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
-  '<td>' + g.totalQty + '</td>' +
-  '<td></td>';
-
+      '<td>' +
+        '<span class="batch-caret" ' +
+              'data-key="' + key + '" ' +
+              'style="cursor:pointer; font-size:1.2em; margin-right:6px;">' +
+          caret +
+        '</span>' +
+        '<strong>' + g.name + '</strong>' +
+      '</td>' +
       '<td>' + g.carbsPerGel + '</td>' +
-      '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
+      '<td>' + (g.caffeineMg || '') + '</td>' +
       '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
       '<td>' + g.totalQty + '</td>' +
-     
+      '<td></td>';
+
     tbody.appendChild(tr);
+
+    // ---- render batch rows if expanded ----
+    if (isOpen) {
+      for (var bi = 0; bi < g.batches.length; bi++) {
+        var b = g.batches[bi];
+        var br = document.createElement('tr');
+        br.style.background = '#f8fafc';
+
+        br.innerHTML =
+          '<td style="padding-left:28px;">↳ ' + toDMYFromISO(b.expiry) + '</td>' +
+          '<td></td>' +
+          '<td></td>' +
+          '<td></td>' +
+          '<td>' + b.quantity + '</td>' +
+          '<td>' +
+            '<button data-dec="' + b.id + '">-1</button> ' +
+            '<button data-edit="' + b.id + '">Edit</button> ' +
+            '<button data-del="' + b.id + '">Delete</button>' +
+          '</td>';
+
+        tbody.appendChild(br);
+      }
+    }
   });
+
+  // ---- wire caret clicks ----
+  var carets = tbody.querySelectorAll('.batch-caret');
+  for (var ci = 0; ci < carets.length; ci++) {
+    carets[ci].addEventListener('click', function () {
+      var key = this.dataset.key;
+      expandedBatches[key] = !expandedBatches[key];
+      renderTable();
+    });
+  }
+
+  // ---- wire batch actions ----
+  var dels = tbody.querySelectorAll('button[data-del]');
+  for (var dli = 0; dli < dels.length; dli++) {
+    dels[dli].addEventListener('click', function () {
+      deleteItem(this.dataset.del);
+      renderTable();
+    });
+  }
+
+  var decs = tbody.querySelectorAll('button[data-dec]');
+  for (var dci = 0; dci < decs.length; dci++) {
+    decs[dci].addEventListener('click', function () {
+      var id = this.dataset.dec;
+      var listNow = loadInventory();
+      for (var i = 0; i < listNow.length; i++) {
+        if (listNow[i].id === id) {
+          updateItem(id, { quantity: Math.max(0, listNow[i].quantity - 1) });
+          break;
+        }
+      }
+      renderTable();
+    });
+  }
+
+  var edits = tbody.querySelectorAll('button[data-edit]');
+  for (var ei = 0; ei < edits.length; ei++) {
+    edits[ei].addEventListener('click', function () {
+      var id = this.dataset.edit;
+      var listNow = loadInventory();
+      for (var i = 0; i < listNow.length; i++) {
+        if (listNow[i].id === id) {
+          var g = listNow[i];
+          var qty = Number(prompt('Quantity', g.quantity));
+          if (isFinite(qty)) updateItem(id, { quantity: Math.max(0, qty) });
+          break;
+        }
+      }
+      renderTable();
+    });
+  }
 }
 
   function wireForm() {
