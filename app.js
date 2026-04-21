@@ -205,9 +205,12 @@ function renderAllocationEditor(
 
     var inventory = GelInventory.flattenInventory();
   
-var currentCarbs = allocPicks.reduce(function (s, p) {
+var gelCarbs = allocPicks.reduce(function (s, p) {
   return s + p.carbs;
 }, 0);
+
+var bottleCarbs = bottleCarbsForEditor || 0;
+var currentCarbs = gelCarbs + bottleCarbs;
 
 var delta = currentCarbs - target;
 
@@ -403,8 +406,11 @@ var rows = Object.keys(byId).map(function (id) {
 
 '<div style="margin:6px 0 10px 0; font-size:0.9rem;">' +
 
+
 '<strong>Target:</strong> ' + Math.round(target) + ' g · ' +
-'<strong>Current:</strong> ' + Math.round(currentCarbs) + ' g · ' +
+'<strong>Current:</strong> ' +
+Math.round(bottleCarbs) + ' g bottles + ' +
+Math.round(gelCarbs) + ' g gels · ' +
 '<strong>Δ:</strong> ' +
 (delta > 0 ? '+' : '') + Math.round(delta) + ' g' +
 '</div>' +
