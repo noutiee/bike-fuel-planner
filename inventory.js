@@ -160,6 +160,8 @@
   // ---------- UI ----------
   function $(id) { return document.getElementById(id); }
   
+  var expandedBatches = {};
+  
 function renderTable() {
   var tbody = $('inventory-tbody');
   if (!tbody) return;
@@ -194,6 +196,17 @@ var key =
         totalQty: 0,
         earliestExpiry: g.expiry
       };
+      
+// ✅ Step 3.3: wire "✏ Batches" toggle buttons
+var toggles = tbody.querySelectorAll('button.batch-toggle');
+for (var ti = 0; ti < toggles.length; ti++) {
+  toggles[ti].addEventListener('click', function () {
+    var key = this.dataset.key;
+    expandedBatches[key] = !expandedBatches[key];
+    renderTable();
+  });
+}
+
     }
 
     grouped[key].totalQty += Number(g.quantity) || 0;
@@ -222,7 +235,7 @@ var key =
       '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
       '<td>' + g.totalQty + '</td>' +
       '<td>' +
-        '<button data-expand="' + key + '">▸</button>' +
+        '<button class="ghost batch-toggle" data-key="' + key + '">✏ Batches</button>' +
       '</td>';
 
     tbody.appendChild(tr);
