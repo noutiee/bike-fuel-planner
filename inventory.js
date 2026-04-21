@@ -159,71 +159,69 @@
 
   // ---------- UI ----------
   function $(id) { return document.getElementById(id); }
+  
+function renderTable() {
+  var tbody = $('inventory-tbody');
+  if (!tbody) return;
 
-  function renderTable() {
-    var tbody = $('inventory-tbody');
-    if (!tbody) return;
+  var toggle = $('toggle-hide-expired');
+  var hideExpired = toggle && toggle.checked ? true : false;
+  var todayISO = new Date().toISOString().slice(0, 10);
 
-    var toggle = $('toggle-hide-expired');
-    var hideExpired = toggle && toggle.checked ? true : false;
-    var todayISO = new Date().toISOString().slice(0, 10);
+  var raw = loadInventory().filter(function (x) {
+    return !hideExpired || x.expiry >= todayISO;
+  });
 
+  // ---- group inventory by gel (display only) ----
+  var grouped = {};
 
-var raw = loadInventory().filter(function (x) {
-  return !hideExpired || x.expiry >= todayISO;
-});
+  for (var i = 0; i < raw.length; i++) {
+    var g = raw[i];
+    var key = g.id || g.name;
 
-// ---- GROUP inventory by gel (display only) ----
-var grouped = {};
-
-for (var i = 0; i < raw.length; i++) {
-  var g = raw[i];
-  var key = g.id || g.name;
-
-  if (!grouped[key]) {
-    grouped[key] = {
-      id: g.id,
-      name: g.name,
-      carbsPerGel: g.carbsPerGel,
-      caffeineMg: g.caffeineMg,
-      totalQty: 0,
-      earliestExpiry: g.expiry
-    };
-  }
-
-  grouped[key].totalQty += Number(g.quantity) || 0;
-
-  if (g.expiry < grouped[key].earliestExpiry) {
-    grouped[key].earliestExpiry = g.expiry;
-  }
-}
-
-// ---- RENDER grouped rows ----
-tbody.innerHTML = '';
-
-Object.keys(grouped).forEach(function (key) {
-  var g = grouped[key];
-  var tr = document.createElement('tr');
-
-  var d = daysUntilISO(g.earliestExpiry);
-  var badge = '';
-  if (d < 0) badge = '<span class="badge-expired">expired</span>';
-  else if (d <= 30) badge = '<span class="badge-expiring">' + d + 'd</span>';
-
-  tr.innerHTML =
-    '<td>' + g.name + ' ' + badge + '</td>' +
-    '<td>' + g.carbsPerGel + '</td>' +
-    '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
-    '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
-    '<td>' + g.totalQty + '</td>' +
-    '<td>' +
-      '<button data-expand="' + key + '">▸</button>' +
-    '</td>';
-
-  tbody.appendChild(tr);
-});
-
+    if (!grouped[key]) {
+      grouped[key] = {
+        id: g.id,
+        name: g.name,
+        carbsPerGel: g.carbsPerGel,
+        caffeineMg: g.caffeineMg,
+        totalQty: 0,
+        earliestExpiry: g.expiry
+      };
     }
+
+    grouped[key].totalQty += Number(g.quantity) || 0;
+
+    if (g.expiry < grouped[key].earliestExpiry) {
+      grouped[key].earliestExpiry = g.expiry;
+    }
+  }
+
+  // ---- render grouped rows ----
+  tbody.innerHTML = '';
+
+  Object.keys(grouped).forEach(function (key) {
+    var g = grouped[key];
+    var tr = document.createElement('tr');
+
+    var d = daysUntilISO(g.earliestExpiry);
+    var badge = '';
+    if (d < 0) badge = '<span class="badge-expired">expired</span>';
+    else if (d <= 30) badge = '<span class="badge-expiring">' + d + 'd</span>';
+
+    tr.innerHTML =
+      '<td>' + g.name + ' ' + badge + '</td>' +
+      '<td>' + g.carbsPerGel + '</td>' +
+      '<td>' + (g.caffeineMg != null ? g.caffeineMg : '') + '</td>' +
+      '<td>' + toDMYFromISO(g.earliestExpiry) + '</td>' +
+      '<td>' + g.totalQty + '</td>' +
+      '<td>' +
+        '<button data-expand="' + key + '">▸</button>' +
+      '</td>';
+
+    tbody.appendChild(tr);
+  });
+}
 
     // Actions
     var dels = tbody.querySelectorAll('button[data-del]');
