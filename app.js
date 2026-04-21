@@ -350,22 +350,31 @@ function countAvailable(id, totalQty) {
   return Math.max(0, totalQty - usedTotalEffective);
 }
 
-var rows = inventory.map(function (g) {
+// group flattened inventory by gel id
+var byId = {};
+inventory.forEach(function (g) {
+  if (!byId[g.id]) {
+    byId[g.id] = {
+      id: g.id,
+      name: g.name,
+      carbs: g.carbs,
+      totalQty: 0
+    };
+  }
+  byId[g.id].totalQty += 1;
+});
 
-  var allocQty = allocated[g.id] || 0;
-  
-var totalQty = inventory.filter(function (x) {
-  return x.id === g.id;
-}).length;
-
-var available = countAvailable(g.id, totalQty);
+var rows = Object.keys(byId).map(function (id) {
+  var g = byId[id];
+  var allocQty = allocated[id] || 0;
+  var available = countAvailable(id, g.totalQty);
 
   return (
     '<div class="editor-row" ' +
       'style="display:grid; grid-template-columns: 2fr 1fr 1.5fr; gap:8px; align-items:center; margin:4px 0;">' +
 
       '<div>' +
-g.name + ' (' + g.carbs + ' g)' +
+        g.name + ' (' + g.carbs + ' g)' +
       '</div>' +
 
       '<div class="summary-cell center">' +
@@ -373,19 +382,17 @@ g.name + ' (' + g.carbs + ' g)' +
       '</div>' +
 
       '<div class="summary-cell center">' +
-        '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
+        '<button class="ghost editor-minus" data-id="' + id + '">−</button> ' +
         '<span style="display:inline-block; min-width:24px; text-align:center;">' +
           allocQty +
         '</span> ' +
-        '<button class="ghost editor-plus" data-id="' + g.id + '"' +
+        '<button class="ghost editor-plus" data-id="' + id + '"' +
           (available === 0 ? ' disabled' : '') +
         '>+</button>' +
       '</div>' +
 
     '</div>'
   );
-
-                         
 }).join('');
 
   return (
