@@ -223,49 +223,6 @@ function renderTable() {
   });
 }
 
-    // Actions
-    var dels = tbody.querySelectorAll('button[data-del]');
-    for (var dli = 0; dli < dels.length; dli++) {
-      dels[dli].addEventListener('click', function () { deleteItem(this.dataset.del); renderTable(); });
-    }
-    var edits = tbody.querySelectorAll('button[data-edit]');
-    for (var edi = 0; edi < edits.length; edi++) {
-      edits[edi].addEventListener('click', function () {
-        var id = this.dataset.edit;
-        var listNow = loadInventory(), g = null;
-        for (var q = 0; q < listNow.length; q++) { if (listNow[q].id === id) { g = listNow[q]; break; } }
-        if (!g) return;
-
-        var name = (prompt('Name', g.name) || g.name).trim();
-        var carbs = Number(prompt('Carbs per gel (g)', g.carbsPerGel));
-        var caff = prompt('Caffeine (mg, optional)', (g.caffeineMg != null ? g.caffeineMg : ''));
-        var qty = Number(prompt('Quantity', g.quantity));
-        var dmy = prompt('Expiry (DD/MM/YY)', toDMYFromISO(g.expiry)) || toDMYFromISO(g.expiry);
-        var iso = toISOFromDMY(dmy) || g.expiry;
-
-        updateItem(id, {
-          name: name || g.name,
-          carbsPerGel: isFinite(carbs) ? Math.max(0, Math.round(carbs)) : g.carbsPerGel,
-          caffeineMg: (caff === '' || caff === null) ? undefined : Number(caff),
-          quantity: isFinite(qty) ? Math.max(0, Math.round(qty)) : g.quantity,
-          expiry: iso
-        });
-        renderTable();
-      });
-    }
-    var decs = tbody.querySelectorAll('button[data-dec]');
-    for (var dci = 0; dci < decs.length; dci++) {
-      decs[dci].addEventListener('click', function () {
-        var id = this.dataset.dec;
-        var item = null, lnow = loadInventory();
-        for (var a = 0; a < lnow.length; a++) { if (lnow[a].id === id) { item = lnow[a]; break; } }
-        if (!item) return;
-        updateItem(id, { quantity: Math.max(0, (item.quantity || 0) - 1) });
-        renderTable();
-      });
-    }
-  }
-
   function wireForm() {
     var form = $('inventory-form');
     if (!form) return;
