@@ -5,52 +5,6 @@
 (function () {
   function $(id) { return document.getElementById(id); }
 
-window.GelInventory = (function () {
-
-var STORAGE_KEY = 'bikeFuelPlanner.gelInventory.v1';
-
-  function loadInventory() {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  }
-
-  function saveInventory(inventory) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-  }
-
-  function flattenInventory() {
-    var inventory = loadInventory();
-    var units = [];
-
-    inventory.forEach(function (gel) {
-var qty = Number(gel.quantity) || 0;
-var carbs = Number(gel.carbsPerGel) || 0;
-
-      if (qty <= 0 || carbs <= 0) return;
-
-      for (var i = 0; i < qty; i++) {
-        units.push({
-          id: gel.id || gel.name,
-          name: gel.name,
-          carbs: carbs,
-          caffeineMg: gel.caffeineMg || 0,
-          expiry: gel.expiry
-        });
-      }
-    });
-
-    return units;
-  }
-
-  return {
-    loadInventory: loadInventory,
-    saveInventory: saveInventory,
-    flattenInventory: flattenInventory
-  };
-
-})();
-  
   /* -----------------------------
      Slider ↔ Number input sync
   ------------------------------ */
@@ -931,17 +885,29 @@ if (btnCopy) {
       list('Run gels',  allocRun) +
       '<button id="btnDeduct" class="ghost">Mark as packed</button>';
 
-    var btnDeduct = $('btnDeduct');
-    if (btnDeduct) {
-      btnDeduct.onclick = function () {
-        var all = [].concat(allocSwim.picks, allocBike.picks, allocRun.picks);
-        GelInventory.deductPlanFromInventory(all);
-        GelInventory.renderTable();
-        alert('Inventory updated');
-        document.getElementById('overlay').classList.remove('show');
-      };
+
+var btnDeduct = $('btnDeduct');
+if (btnDeduct) {
+  btnDeduct.onclick = function () {
+    var all = [].concat(
+      allocSwim.picks,
+      allocBike.picks,
+      allocRun.picks
+    );
+
+    // ✅ Deduct gels from inventory (FEFO handled in inventory.js)
+    window.GelInventory.deductPlanFromInventory(all);
+
+    // ✅ Refresh inventory UI
+    if (window.GelInventory.renderTable) {
+      window.GelInventory.renderTable();
     }
-  }
+
+    alert('Inventory updated');
+    document.getElementById('overlay').classList.remove('show');
+  };
+}
+}
 
   
 
