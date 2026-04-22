@@ -287,6 +287,14 @@ function renderTable() {
 
 if (isOpen) {
 
+// Sort batches FEFO for display (earliest expiry first)
+g.batches.sort(function (a, b) {
+  if (!a.expiry && !b.expiry) return 0;
+  if (!a.expiry) return 1;
+  if (!b.expiry) return -1;
+  return new Date(a.expiry) - new Date(b.expiry);
+});
+
   // 1️⃣ Render batch rows
   for (var bi = 0; bi < g.batches.length; bi++) {
     var b = g.batches[bi];
