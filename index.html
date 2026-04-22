@@ -247,30 +247,6 @@
   <fieldset>
     <legend>Gel Inventory</legend>
 
-    <form id="inventory-form">
-      <label>
-        <span>Gel name</span>
-        <input id="gel-name" placeholder="e.g., Maurten Gel 100" required>
-      </label>
-      <label>
-        <span>Carbs per gel (g)</span>
-        <input id="gel-carbs" type="number" min="1" step="1" required>
-      </label>
-      <label>
-        <span>Caffeine (mg, optional)</span>
-        <input id="gel-caff" type="number" min="0" step="1">
-      </label>
-      <label>
-        <span>Expiry date (DD/MM/YY)</span>
-        <input id="gel-expiry" placeholder="DD/MM/YY" required>
-      </label>
-      <label>
-        <span>Quantity</span>
-        <input id="gel-qty" type="number" min="1" step="1" required>
-      </label>
-      <button class="primary" type="submit">Add to inventory</button>
-    </form>
-
     <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
       <button class="ghost" id="btn-export" type="button">Export JSON</button>
       <label class="ghost" style="cursor:pointer">
@@ -295,6 +271,13 @@
       </thead>
       <tbody id="inventory-tbody"></tbody>
     </table>
+    
+<div style="margin-top:12px; display:flex; justify-content:flex-start;">
+  <button id="btn-add-gel" class="ghost">
+    + Add new gel
+  </button>
+</div>
+
   </fieldset>
 </section>
 
