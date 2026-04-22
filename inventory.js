@@ -250,6 +250,25 @@ function renderTable() {
         tbody.appendChild(br);
       }
     }
+    
+  // ---- "+ Add batch" row ----
+  var addRow = document.createElement('tr');
+  addRow.style.background = '#f8fafc';
+
+  addRow.innerHTML =
+    '<td style="padding-left:28px; cursor:pointer; font-style:italic;" ' +
+        'class="add-batch-trigger" ' +
+        'data-gel-key="' + key + '">' +
+      '+ Add batch' +
+    '</td>' +
+    '<td></td>' +
+    '<td></td>' +
+    '<td></td>' +
+    '<td></td>' +
+    '<td></td>';
+
+  tbody.appendChild(addRow);
+
   });
 
   // ---- wire caret clicks ----
