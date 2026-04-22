@@ -392,5 +392,78 @@ function renderTable() {
     renderTable: renderTable
   };
 
-  document.addEventListener('DOMContentLoaded', function () { wireForm(); renderTable(); });
+// ===============================
+// Add New Gel modal wiring
+// ===============================
+
+function wireAddGelModal() {
+  var openBtn = document.getElementById('btn-add-gel');
+  var modal = document.getElementById('add-gel-modal');
+  var closeBtn = document.getElementById('close-add-gel');
+  var form = document.getElementById('add-gel-form');
+
+  if (!openBtn || !modal || !closeBtn || !form) return;
+
+  // Open modal
+  openBtn.addEventListener('click', function () {
+    modal.style.display = 'flex';
+  });
+
+  // Close modal (X button)
+  closeBtn.addEventListener('click', function () {
+    modal.style.display = 'none';
+    form.reset();
+  });
+
+  // Close modal when clicking outside card
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      form.reset();
+    }
+  });
+
+  // Handle form submit
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var name = document.getElementById('modal-gel-name').value.trim().replace(/\s+/g, ' ');
+    var carbs = Number(document.getElementById('modal-gel-carbs').value);
+    var caffRaw = document.getElementById('modal-gel-caff').value;
+    var caff = (caffRaw === '' ? undefined : Number(caffRaw));
+    var expiryDMY = document.getElementById('modal-gel-expiry').value.trim();
+    var qty = Number(document.getElementById('modal-gel-qty').value);
+
+    var iso = toISOFromDMY(expiryDMY);
+
+    if (!name || !isFinite(carbs) || carbs <= 0 || !iso || !isFinite(qty) || qty <= 0) {
+      alert('Please fill in all required fields with valid values. Use DD/MM/YY for the date.');
+      return;
+    }
+
+    var nowIso = new Date().toISOString();
+
+    addItem({
+      id: uid(),
+      name: name,
+      carbsPerGel: Math.round(carbs),
+      caffeineMg: caff,
+      expiry: iso,
+      quantity: Math.round(qty),
+      createdAt: nowIso,
+      updatedAt: nowIso
+    });
+
+    form.reset();
+    modal.style.display = 'none';
+    renderTable();
+  });
+}
+  
+ 
+document.addEventListener('DOMContentLoaded', function () {
+  wireForm();
+  wireAddGelModal();
+  renderTable();
+});
 })();
