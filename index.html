@@ -247,16 +247,25 @@
   <fieldset>
     <legend>Gel Inventory</legend>
 
-    <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
-      <button class="ghost" id="btn-export" type="button">Export JSON</button>
-      <label class="ghost" style="cursor:pointer">
-        Import JSON
-        <input id="file-import" type="file" accept="application/json" hidden>
-      </label>
-      <label style="margin-left:auto">
-        <input id="toggle-hide-expired" type="checkbox"> Hide expired
-      </label>
-    </div>
+<details style="margin:8px 0">
+  <summary><strong>Advanced inventory settings</strong></summary>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+    <button class="ghost" id="btn-export" type="button">
+      Export inventory (JSON)
+    </button>
+
+    <label class="ghost" style="cursor:pointer">
+      Import inventory (JSON)
+      <input id="file-import" type="file" accept="application/json" hidden>
+    </label>
+
+    <label>
+      <input id="toggle-hide-expired" type="checkbox">
+      Hide expired batches
+    </label>
+  </div>
+</details>
 
     <table id="inventory-table">
       <thead>
