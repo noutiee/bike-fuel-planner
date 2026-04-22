@@ -242,30 +242,45 @@
 
   <button class="primary" id="btnCalc">Calculate</button>
 
-  
-<section id="inventory-section" style="margin-top:16px">
+<section id="inventory-section">
+
+  <!-- Main inventory card -->
   <fieldset>
     <legend>Gel Inventory</legend>
 
-<details style="margin:8px 0">
-  <summary><strong>Advanced inventory settings</strong></summary>
+    <table id="inventory-table">
+      ...
+    </table>
 
-  <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-    <button class="ghost" id="btn-export" type="button">
-      Export inventory (JSON)
-    </button>
+    <div style="margin-top:12px; display:flex; justify-content:flex-start;">
+      <button id="btn-add-gel" class="ghost">
+        + Add new gel
+      </button>
+    </div>
+  </fieldset>
 
-    <label class="ghost" style="cursor:pointer">
-      Import inventory (JSON)
-      <input id="file-import" type="file" accept="application/json" hidden>
-    </label>
+  <!-- Advanced inventory settings (outside the card) -->
+  <details style="margin-top:12px;">
+    <summary><strong>Advanced inventory settings</strong></summary>
 
-    <label>
-      <input id="toggle-hide-expired" type="checkbox">
-      Hide expired batches
-    </label>
-  </div>
-</details>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:8px; flex-wrap:wrap;">
+      <button class="ghost" id="btn-export" type="button">
+        Export inventory (JSON)
+      </button>
+
+      <label class="ghost" style="cursor:pointer">
+        Import inventory (JSON)
+        <input id="file-import" type="file" accept="application/json" hidden>
+      </label>
+
+      <label>
+        <input id="toggle-hide-expired" type="checkbox">
+        Hide expired batches
+      </label>
+    </div>
+  </details>
+
+</section>
 
     <table id="inventory-table">
       <thead>
@@ -290,7 +305,6 @@
   </fieldset>
 </section>
 
-  
   <!-- Inventory section unchanged -->
 </main>
 
