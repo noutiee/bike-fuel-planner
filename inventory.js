@@ -64,6 +64,31 @@
     saveInventory(out);
   }
 
+function flattenInventory() {
+  var inventory = loadInventory();
+  var units = [];
+
+  for (var i = 0; i < inventory.length; i++) {
+    var g = inventory[i];
+    var qty = Number(g.quantity) || 0;
+    var carbs = Number(g.carbsPerGel) || 0;
+
+    if (qty <= 0 || carbs <= 0) continue;
+
+    for (var n = 0; n < qty; n++) {
+      units.push({
+        id: g.id,
+        name: g.name,
+        carbs: carbs,
+        caffeineMg: g.caffeineMg || 0,
+        expiry: g.expiry
+      });
+    }
+  }
+
+  return units;
+}
+
   // ---------- SMART allocation (ES5) ----------
   function allocateSmart(requiredCarbs, opts) {
     opts = opts || {};
@@ -401,13 +426,17 @@ if (isOpen) {
   }
 
   // ---------- Public API ----------
-  window.GelInventory = {
-    loadInventory: loadInventory,
-    saveInventory: saveInventory,
-    allocateFromInventory: allocateFromInventory,
-    deductPlanFromInventory: deductPlanFromInventory,
-    renderTable: renderTable
-  };
+window.GelInventory = {
+  loadInventory: loadInventory,
+  saveInventory: saveInventory,
+
+  // REQUIRED by app.js (allocation + editor)
+  flattenInventory: flattenInventory,
+
+  allocateFromInventory: allocateFromInventory,
+  deductPlanFromInventory: deductPlanFromInventory,
+  renderTable: renderTable
+};
 
 // ===============================
 // Add New Gel modal wiring
