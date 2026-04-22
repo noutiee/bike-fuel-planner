@@ -168,19 +168,49 @@ function flattenInventory() {
 
   function allocateFromInventory(requiredCarbs, opts) { return allocateSmart(requiredCarbs, opts); }
 
-  function deductPlanFromInventory(picks) {
-    var list = loadInventory();
-    for (var i = 0; i < (picks || []).length; i++) {
-      var p = picks[i];
-      var idx = -1;
-      for (var k = 0; k < list.length; k++) { if (list[k].id === p.id) { idx = k; break; } }
-      if (idx >= 0) {
-        list[idx].quantity = Math.max(0, (list[idx].quantity || 0) - p.used);
-        list[idx].updatedAt = new Date().toISOString();
+function deductPlanFromInventory(picks) {
+  var list = loadInventory();
+  if (!picks || !picks.length) return;
+
+  // 1️⃣ Group total required quantity per gel id
+  var required = {};
+  for (var i = 0; i < picks.length; i++) {
+    var p = picks[i];
+    required[p.id] = (required[p.id] || 0) + (p.used || 1);
+  }
+
+  // 2️⃣ For each gel id, deduct FEFO
+  Object.keys(required).forEach(function (gelId) {
+    var remaining = required[gelId];
+
+    // Collect matching inventory rows
+    var batches = [];
+    for (var j = 0; j < list.length; j++) {
+      if (list[j].id === gelId && (list[j].quantity || 0) > 0) {
+        batches.push(list[j]);
       }
     }
-    saveInventory(list);
-  }
+
+    // Sort by earliest expiry (FEFO)
+    batches.sort(function (a, b) {
+      if (!a.expiry && !b.expiry) return 0;
+      if (!a.expiry) return 1;
+      if (!b.expiry) return -1;
+      return new Date(a.expiry) - new Date(b.expiry);
+    });
+
+    // Deduct from earliest expiry first
+    for (var k = 0; k < batches.length && remaining > 0; k++) {
+      var batch = batches[k];
+      var take = Math.min(batch.quantity, remaining);
+      batch.quantity -= take;
+      remaining -= take;
+      batch.updatedAt = new Date().toISOString();
+    }
+  });
+
+  saveInventory(list);
+}
 
   // ---------- UI ----------
   function $(id) { return document.getElementById(id); }
