@@ -476,11 +476,99 @@ function wireAddGelModal() {
     renderTable();
   });
 }
-  
- 
+
+// ===============================
+// Add Batch modal wiring
+// ===============================
+
+function wireAddBatchModal() {
+  var modal = document.getElementById('add-batch-modal');
+  var closeBtn = document.getElementById('close-add-batch');
+  var form = document.getElementById('add-batch-form');
+
+  var nameInput = document.getElementById('batch-gel-name');
+  var carbsInput = document.getElementById('batch-gel-carbs');
+  var caffInput = document.getElementById('batch-gel-caff');
+  var expiryInput = document.getElementById('batch-expiry');
+  var qtyInput = document.getElementById('batch-qty');
+
+  if (!modal || !closeBtn || !form) return;
+
+  // Delegate click for "+ Add batch"
+  document.addEventListener('click', function (e) {
+    var trigger = e.target.closest('.add-batch-trigger');
+    if (!trigger) return;
+
+    var gelKey = trigger.dataset.gelKey;
+    if (!gelKey) return;
+
+    // gelKey format: name|carbs|caff
+    var parts = gelKey.split('|');
+    nameInput.value = parts[0];
+    carbsInput.value = Number(parts[1]);
+    caffInput.value = Number(parts[2]) || 0;
+
+    expiryInput.value = '';
+    qtyInput.value = '';
+
+    modal.style.display = 'flex';
+  });
+
+  // Close modal (X)
+  closeBtn.addEventListener('click', function () {
+    modal.style.display = 'none';
+    form.reset();
+  });
+
+  // Close modal on overlay click
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      form.reset();
+    }
+  });
+
+  // Handle submit
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var name = nameInput.value.trim();
+    var carbs = Number(carbsInput.value);
+    var caff = Number(caffInput.value) || 0;
+    var expiryDMY = expiryInput.value.trim();
+    var qty = Number(qtyInput.value);
+
+    var iso = toISOFromDMY(expiryDMY);
+
+    if (!name || !isFinite(carbs) || !iso || !isFinite(qty) || qty <= 0) {
+      alert('Please enter a valid expiry date and quantity.');
+      return;
+    }
+
+    var nowIso = new Date().toISOString();
+
+    addItem({
+      id: uid(),
+      name: name,
+      carbsPerGel: Math.round(carbs),
+      caffeineMg: caff,
+      expiry: iso,
+      quantity: Math.round(qty),
+      createdAt: nowIso,
+      updatedAt: nowIso
+    });
+
+    form.reset();
+    modal.style.display = 'none';
+    renderTable();
+  });
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
   wireForm();
   wireAddGelModal();
+  wireAddBatchModal();
   renderTable();
 });
 })();
