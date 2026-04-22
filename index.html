@@ -306,6 +306,52 @@
   </div>
 </div>
 
+<!-- ===================== -->
+<!-- Add New Gel Modal -->
+<!-- ===================== -->
+<div id="add-gel-modal" class="overlay" style="display:none;">
+  <div class="card">
+    <div class="modal-header">
+      <h2>Add new gel</h2>
+      <button id="close-add-gel" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form id="add-gel-form">
+        <label>
+          <span>Gel name</span>
+          <input id="modal-gel-name" placeholder="e.g., Maurten Gel 100" required>
+        </label>
+
+        <label>
+          <span>Carbs per gel (g)</span>
+          <input id="modal-gel-carbs" type="number" min="1" step="1" required>
+        </label>
+
+        <label>
+          <span>Caffeine (mg, optional)</span>
+          <input id="modal-gel-caff" type="number" min="0" step="1">
+        </label>
+
+        <hr style="margin:12px 0;">
+
+        <label>
+          <span>Expiry date (DD/MM/YY)</span>
+          <input id="modal-gel-expiry" placeholder="DD/MM/YY" required>
+        </label>
+
+        <label>
+          <span>Quantity</span>
+          <input id="modal-gel-qty" type="number" min="1" step="1" required>
+        </label>
+
+        <button type="submit" class="primary">Add to inventory</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 <!-- App scripts (order matters) -->
 <script src="sync.js"></script>
 <script src="inventory.js"></script>
