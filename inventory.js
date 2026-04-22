@@ -44,7 +44,7 @@
   function saveInventory(list) {
     localStorage.setItem(LS_KEY, JSON.stringify(list));
     if (window.CloudSync && typeof window.CloudSync.save === 'function') {
-  //    window.CloudSync.save(list);
+      window.CloudSync.save(list);
     }
   }
   function addItem(item) { var l = loadInventory(); l.push(item); saveInventory(l); }
