@@ -229,12 +229,31 @@ function renderTable() {
     tbody.appendChild(tr);
 
     // ---- render batch rows if expanded ----
-    if (isOpen) {
-      for (var bi = 0; bi < g.batches.length; bi++) {
-        var b = g.batches[bi];
-        var br = document.createElement('tr');
-        br.style.background = '#f8fafc';
-         // ---- "+ Add batch" row ----
+
+if (isOpen) {
+
+  // 1️⃣ Render batch rows
+  for (var bi = 0; bi < g.batches.length; bi++) {
+    var b = g.batches[bi];
+    var br = document.createElement('tr');
+    br.style.background = '#f8fafc';
+
+    br.innerHTML =
+      '<td style="padding-left:28px;">↳ ' + toDMYFromISO(b.expiry) + '</td>' +
+      '<td></td>' +
+      '<td></td>' +
+      '<td></td>' +
+      '<td>' + b.quantity + '</td>' +
+      '<td>' +
+        '<button data-dec="' + b.id + '">-1</button> ' +
+        '<button data-edit="' + b.id + '">Edit</button> ' +
+        '<button data-del="' + b.id + '">Delete</button>' +
+      '</td>';
+
+    tbody.appendChild(br);
+  }
+
+  // 2️⃣ Render "+ Add batch" ONCE, after all batches
   var addRow = document.createElement('tr');
   addRow.style.background = '#f8fafc';
 
@@ -244,28 +263,10 @@ function renderTable() {
         'data-gel-key="' + key + '">' +
       '+ Add batch' +
     '</td>' +
-    '<td></td>' +
-    '<td></td>' +
-    '<td></td>' +
-    '<td></td>' +
-    '<td></td>';
+    '<td></td><td></td><td></td><td></td><td></td>';
 
-  tbody.appendChild(addRow); 
-        br.innerHTML =
-          '<td style="padding-left:28px;">↳ ' + toDMYFromISO(b.expiry) + '</td>' +
-          '<td></td>' +
-          '<td></td>' +
-          '<td></td>' +
-          '<td>' + b.quantity + '</td>' +
-          '<td>' +
-            '<button data-dec="' + b.id + '">-1</button> ' +
-            '<button data-edit="' + b.id + '">Edit</button> ' +
-            '<button data-del="' + b.id + '">Delete</button>' +
-          '</td>';
-
-        tbody.appendChild(br);
-      }
-    }
+  tbody.appendChild(addRow);
+}
       });
 
   // ---- wire caret clicks ----
