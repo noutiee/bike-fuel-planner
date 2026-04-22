@@ -234,24 +234,7 @@ function renderTable() {
         var b = g.batches[bi];
         var br = document.createElement('tr');
         br.style.background = '#f8fafc';
-        
-        br.innerHTML =
-          '<td style="padding-left:28px;">↳ ' + toDMYFromISO(b.expiry) + '</td>' +
-          '<td></td>' +
-          '<td></td>' +
-          '<td></td>' +
-          '<td>' + b.quantity + '</td>' +
-          '<td>' +
-            '<button data-dec="' + b.id + '">-1</button> ' +
-            '<button data-edit="' + b.id + '">Edit</button> ' +
-            '<button data-del="' + b.id + '">Delete</button>' +
-          '</td>';
-
-        tbody.appendChild(br);
-      }
-    }
-    
-  // ---- "+ Add batch" row ----
+         // ---- "+ Add batch" row ----
   var addRow = document.createElement('tr');
   addRow.style.background = '#f8fafc';
 
@@ -267,9 +250,23 @@ function renderTable() {
     '<td></td>' +
     '<td></td>';
 
-  tbody.appendChild(addRow);
+  tbody.appendChild(addRow); 
+        br.innerHTML =
+          '<td style="padding-left:28px;">↳ ' + toDMYFromISO(b.expiry) + '</td>' +
+          '<td></td>' +
+          '<td></td>' +
+          '<td></td>' +
+          '<td>' + b.quantity + '</td>' +
+          '<td>' +
+            '<button data-dec="' + b.id + '">-1</button> ' +
+            '<button data-edit="' + b.id + '">Edit</button> ' +
+            '<button data-del="' + b.id + '">Delete</button>' +
+          '</td>';
 
-  });
+        tbody.appendChild(br);
+      }
+    }
+      });
 
   // ---- wire caret clicks ----
   var carets = tbody.querySelectorAll('.batch-caret');
