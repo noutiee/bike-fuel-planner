@@ -168,15 +168,25 @@
     try { await saveRemote(uid, winner); } catch {}
 
     // Live stream: apply newer remote to local
-    unsub = ref.onSnapshot((s) => {
-      const incoming = s.data()?.items || [];
-      readLocal().then(curr => {
-        if (isRemoteNewer(curr, incoming)) {
-          suppressLocalWatcher = true;
-          saveLocal(incoming).finally(() => { suppressLocalWatcher = false; });
-        }
+unsub = ref.onSnapshot((s) => {
+  const incoming = s.data()?.items || [];
+
+  readLocal().then(curr => {
+
+    // ✅ Do not overwrite local changes that are newer
+    if (lastUpdated(curr) > lastUpdated(incoming)) {
+      return;
+    }
+
+    if (isRemoteNewer(curr, incoming)) {
+      suppressLocalWatcher = true;
+      saveLocal(incoming).finally(() => {
+        suppressLocalWatcher = false;
       });
-    });
+    }
+  });
+});
+
   });
 
   // ---- 10) API for inventory.js to push local changes ----
