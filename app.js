@@ -353,24 +353,30 @@ function countAvailable(id, totalQty) {
   return Math.max(0, totalQty - usedTotalEffective);
 }
 
-// group flattened inventory by gel id
-var byId = {};
+// ---- Group flattened inventory by GEL TYPE (name + carbs) ----
+var byType = {};
+
 inventory.forEach(function (g) {
-  if (!byId[g.id]) {
-    byId[g.id] = {
+  var key = g.name + '|' + g.carbs;
+
+  if (!byType[key]) {
+    byType[key] = {
+      // IMPORTANT: we keep ONE representative id for allocation logic
       id: g.id,
       name: g.name,
       carbs: g.carbs,
       totalQty: 0
     };
   }
-  byId[g.id].totalQty += 1;
+
+  byType[key].totalQty += 1;
 });
 
-var rows = Object.keys(byId).map(function (id) {
-  var g = byId[id];
-  var allocQty = allocated[id] || 0;
-  var available = countAvailable(id, g.totalQty);
+var rows = Object.keys(byType).map(function (key) {
+  var g = byType[key];
+
+  var allocQty = allocated[g.id] || 0;
+  var available = countAvailable(g.id, g.totalQty);
 
   return (
     '<div class="editor-row" ' +
@@ -385,11 +391,11 @@ var rows = Object.keys(byId).map(function (id) {
       '</div>' +
 
       '<div class="summary-cell center">' +
-        '<button class="ghost editor-minus" data-id="' + id + '">−</button> ' +
+        '<button class="ghost editor-minus" data-id="' + g.id + '">−</button> ' +
         '<span style="display:inline-block; min-width:24px; text-align:center;">' +
           allocQty +
         '</span> ' +
-        '<button class="ghost editor-plus" data-id="' + id + '"' +
+        '<button class="ghost editor-plus" data-id="' + g.id + '"' +
           (available === 0 ? ' disabled' : '') +
         '>+</button>' +
       '</div>' +
