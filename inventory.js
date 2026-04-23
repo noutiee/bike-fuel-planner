@@ -366,7 +366,10 @@ g.batches.sort(function (a, b) {
     });
   }
 
-var edits = tbody.querySelectorAll('button[data-edit]');var edits = tbody.query batchId = this.dataset.edit;
+var edits = tbody.querySelectorAll('button[data-edit]');
+for (var ei = 0; ei < edits.length; ei++) {
+  edits[ei].addEventListener('click', function () {
+    var batchId = this.dataset.edit;
     var listNow = loadInventory();
 
     for (var i = 0; i < listNow.length; i++) {
@@ -386,6 +389,7 @@ var edits = tbody.querySelectorAll('button[data-edit]');var edits = tbody.query 
     renderTable();
   });
 }
+  
 for (var ei = 0; ei < edits.length; ei++) {
   edits[ei].addEventListener('click', function () {
 
