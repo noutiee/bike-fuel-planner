@@ -389,11 +389,6 @@ for (var ei = 0; ei < edits.length; ei++) {
     renderTable();
   });
 }
-  
-for (var ei = 0; ei < edits.length; ei++) {
-  edits[ei].addEventListener('click', function () {
-
-}
 
   function wireForm() {
     var form = $('inventory-form');
