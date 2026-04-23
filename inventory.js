@@ -387,9 +387,8 @@ for (var ei = 0; ei < edits.length; ei++) {
     }
 
     renderTable();
-  });
-}
-
+  });}}
+  
   function wireForm() {
     var form = $('inventory-form');
     if (!form) return;
