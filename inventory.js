@@ -366,22 +366,29 @@ g.batches.sort(function (a, b) {
     });
   }
 
-  var edits = tbody.querySelectorAll('button[data-edit]');
-  for (var ei = 0; ei < edits.length; ei++) {
-    edits[ei].addEventListener('click', function () {
-      var id = this.dataset.edit;
-      var listNow = loadInventory();
-      for (var i = 0; i < listNow.length; i++) {
-        if (listNow[i].id === id) {
-          var g = listNow[i];
-          var qty = Number(prompt('Quantity', g.quantity));
-          if (isFinite(qty)) updateItem(id, { quantity: Math.max(0, qty) });
-          break;
+var edits = tbody.querySelectorAll('button[data-edit]');var edits = tbody.query batchId = this.dataset.edit;
+    var listNow = loadInventory();
+
+    for (var i = 0; i < listNow.length; i++) {
+      if (listNow[i].id === batchId) {
+        var batch = listNow[i];
+        var qty = Number(prompt('Quantity', batch.quantity));
+
+        if (isFinite(qty)) {
+          batch.quantity = Math.max(0, qty);
+          batch.updatedAt = new Date().toISOString();
+          saveInventory(listNow);
         }
+        break;
       }
-      renderTable();
-    });
-  }
+    }
+
+    renderTable();
+  });
+}
+for (var ei = 0; ei < edits.length; ei++) {
+  edits[ei].addEventListener('click', function () {
+
 }
 
   function wireForm() {
